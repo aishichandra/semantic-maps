@@ -16,7 +16,7 @@
   let animationInterval = null;
 
   onMount(async () => {
-    const response = await fetch('/data.csv');
+    const response = await fetch('/semantic-maps/data.csv');
     const csvText = await response.text();
     parseCSV(csvText);
   });
