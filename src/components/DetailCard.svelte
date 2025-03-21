@@ -6,6 +6,7 @@
   export let hoveredData;
   export let domainColumn;
   export let data;
+  export let colorScale;
   
   let filteredData = [];
   let dates = [];
@@ -14,7 +15,7 @@
   let interval
 
 
-  const colorScale = scaleOrdinal(schemeCategory10);
+  // const colorScale = scaleOrdinal(schemeCategory10);
 
   onMount(() => {
       colorScale.domain(data.map(d => d[domainColumn]));
@@ -27,7 +28,7 @@
   <h1>{hoveredData.title}</h1>
   <span style="background: {colorScale(hoveredData[domainColumn])};">
       {hoveredData[domainColumn]}</span>
-  <h2>Date:</h2>
+  <h2>{hoveredData.date.toISOString().split('T')[0]}</h2>  
   <p> {hoveredData.text}</p>
   {:else}
   <p>Hover over a circle to see details here.</p>

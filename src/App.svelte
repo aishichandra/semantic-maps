@@ -3,17 +3,13 @@
   import Papa from 'papaparse';
   import Scatterplot from './components/Scatterplot.svelte';
 
-  let data = [];
-  let columns = [];
-  let domainColumn = "";
-  let uniqueValues = [];
-  let selectedValues = new Set();
-  let opacity = 1;
+  let data = [], columns = [], domainColumn = "", uniqueValues = [];
+  let selectedValues = new Set(); 
+  let opacity = 1, startDate = null, endDate = null;
+  let filteredData = [], allDates = [], currentScrubIndex = 0;
 
-  let startDate, endDate, filteredData = [];
-  let allDates = [];
-  let currentScrubIndex = 0;
-  let animationInterval = null;
+  $: currentScrubDate = allDates[currentScrubIndex] || null;
+  $: filteredData = data.filter(d => (!startDate || d.date >= startDate) && (!endDate || d.date <= currentScrubDate));
 
   onMount(async () => {
     const response = await fetch('/semantic-maps/data.csv');
@@ -23,68 +19,38 @@
 
   function parseCSV(csvText) {
     const result = Papa.parse(csvText, { header: true });
-    data = result.data
-      .filter(d => d.x && d.y && d.date)
+    data = result.data.filter(d => d.x && d.y && d.date)
       .map(d => ({ ...d, x: +d.x, y: +d.y, date: new Date(d.date) }));
 
     columns = result.meta.fields || [];
-
-    allDates = Array.from(new Set(data.map(d => d.date.getTime())))
+    allDates = [...new Set(data.map(d => d.date.getTime()))]
       .sort((a, b) => a - b)
       .map(t => new Date(t));
 
     startDate = allDates[0];
     endDate = allDates[allDates.length - 1];
-    currentScrubIndex = 0;
+    currentScrubIndex = allDates.length - 1;
   }
-
-  $: currentScrubDate = allDates[currentScrubIndex] || startDate;
-
-  $: filteredData = data.filter(
-    d => d.date >= startDate && d.date <= currentScrubDate
-  );
 
   function handleDomainChange(event) {
     domainColumn = event.target.value;
-    if (domainColumn) {
-      uniqueValues = [...new Set(data.map(d => d[domainColumn]).filter(Boolean))];
-      selectedValues = new Set(uniqueValues);
-    }
+    uniqueValues = domainColumn ? [...new Set(data.map(d => d[domainColumn]).filter(Boolean))] : [];
+    selectedValues = new Set();
   }
 
   function handleSelectionChange(event) {
-    selectedValues = new Set(Array.from(event.target.selectedOptions, o => o.value));
+    selectedValues = new Set([...event.target.selectedOptions].map(o => o.value));
   }
 
-  function handleStartDateChange(e) {
-    startDate = new Date(e.target.value);
-    if (startDate > currentScrubDate) {
-      currentScrubIndex = allDates.findIndex(d => d >= startDate);
+  function handleDateChange(e, type) {
+    const newDate = e.target.value ? new Date(e.target.value) : null;
+    if (type === 'start') {
+      startDate = newDate;
+      if (startDate > currentScrubDate) currentScrubIndex = allDates.findIndex(d => d >= startDate);
+    } else {
+      endDate = newDate;
+      if (endDate < currentScrubDate) currentScrubIndex = allDates.findIndex(d => d <= endDate);
     }
-  }
-
-  function handleEndDateChange(e) {
-    endDate = new Date(e.target.value);
-    if (endDate < currentScrubDate) {
-      currentScrubIndex = allDates.findIndex(d => d <= endDate);
-    }
-  }
-
-  function playAnimation() {
-    clearInterval(animationInterval);
-    currentScrubIndex = allDates.findIndex(d => d >= startDate);
-
-    animationInterval = setInterval(() => {
-      if (currentScrubIndex >= allDates.length || allDates[currentScrubIndex] > endDate) {
-        clearInterval(animationInterval);
-        return;
-      }
-      currentScrubIndex += 1;
-    }, 500);
-  }
-
-  function pauseAnimation() {
-    clearInterval(animationInterval);
   }
 
   function formatDateInput(date) {
@@ -95,16 +61,14 @@
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        parseCSV(e.target.result);
-      };
+      reader.onload = (e) => parseCSV(e.target.result);
       reader.readAsText(file);
     }
   }
 </script>
 
 <div class="container">
-  <div class="filter-column">
+  <div class="filter-panel">
     <label>Upload CSV File:</label>
     <input type="file" accept=".csv" on:change={handleFileUpload} />
 
@@ -122,7 +86,7 @@
       <label>Select values to highlight:</label>
       <select multiple size="5" class="multi-select" on:change={handleSelectionChange}>
         {#each uniqueValues as value}
-          <option value={value} selected>{value}</option>
+          <option value={value}>{value}</option>
         {/each}
       </select>
     {/if}
@@ -132,19 +96,14 @@
 
     <div class="date-controls">
       <label>Start Date:</label>
-      <input type="date" value={formatDateInput(startDate)} on:change={handleStartDateChange} />
-      <br/>
+      <input type="date" value={formatDateInput(startDate)} on:change={(e) => handleDateChange(e, 'start')} />
+      
       <label>End Date:</label>
-      <input type="date" value={formatDateInput(endDate)} on:change={handleEndDateChange} />
-
+      <input type="date" value={formatDateInput(endDate)} on:change={(e) => handleDateChange(e, 'end')} />
+      
       <label>Date Scrubber:</label>
       <input type="range" min="0" max={allDates.length - 1} bind:value={currentScrubIndex} />
       <div class="current-date">{formatDateInput(currentScrubDate)}</div>
-
-      <div class="buttons">
-        <button on:click={playAnimation}>▶️ Play</button>
-        <button on:click={pauseAnimation}>⏸️ Pause</button>
-      </div>
     </div>
   </div>
 
@@ -158,22 +117,23 @@
 </div>
 
 <style>
+
   .container {
     display: flex;
     gap: 1rem;
     padding: 1rem;
   }
-  .filter-column {
+  .filter-panel {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    padding: 1.5rem;
-    border: 1px solid #ddd;
+    gap: 1rem;
+    padding: 1rem;
+    /* border: 1px solid #ddd; */
     border-radius: 10px;
     background-color: #fafafa;
     width: 280px;
   }
-  .filter-column label {
+  .filter-panel label {
     font-weight: bold;
   }
   .multi-select option {
@@ -189,9 +149,9 @@
     font-size: 0.9rem;
     margin-top: 5px;
   }
-  .buttons {
+  .date-controls {
     display: flex;
-    gap: 10px;
-    margin-top: 10px;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 </style>
