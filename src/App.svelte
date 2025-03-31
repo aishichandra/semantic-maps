@@ -9,6 +9,8 @@
   let filteredData = [], allDates = [];
   let startDateIndex = 0;
   let endDateIndex = 0;
+  let isPlaying = false;
+  let playInterval = null;
 
   $: filteredData = data.filter(d => (!startDate || d.date >= startDate) && (!endDate || d.date <= endDate));
 
@@ -19,6 +21,10 @@
     const response = await fetch('/semantic-maps/data.csv');
     const csvText = await response.text();
     parseCSV(csvText);
+
+    return () => {
+      if (playInterval) clearInterval(playInterval);
+    };
   });
 
   function parseCSV(csvText) {
@@ -66,6 +72,46 @@
       const reader = new FileReader();
       reader.onload = (e) => parseCSV(e.target.result);
       reader.readAsText(file);
+    }
+  }
+
+  function shiftDateRange(days) {
+    const rangeDuration = endDateIndex - startDateIndex;
+    let newStartIndex = startDateIndex + days;
+    let newEndIndex = endDateIndex + days;
+
+    if (newStartIndex < 0) {
+      newStartIndex = 0;
+      newEndIndex = rangeDuration;
+    }
+
+    if (newEndIndex >= allDates.length) {
+      newEndIndex = allDates.length - 1;
+      newStartIndex = Math.max(0, newEndIndex - rangeDuration);
+    }
+
+    startDateIndex = newStartIndex;
+    endDateIndex = newEndIndex;
+    startDate = allDates[startDateIndex] || allDates[0];
+    endDate = allDates[endDateIndex] || allDates[allDates.length - 1];
+  }
+
+  function togglePlayPause() {
+    if (isPlaying) {
+      clearInterval(playInterval);
+      isPlaying = false;
+      playInterval = null;
+    } else {
+      isPlaying = true;
+      playInterval = setInterval(() => {
+        if (endDateIndex >= allDates.length - 1) {
+          clearInterval(playInterval);
+          isPlaying = false;
+          playInterval = null;
+          return;
+        }
+        shiftDateRange(1);
+      }, 500);
     }
   }
 </script>
@@ -132,6 +178,20 @@
       <div class="date-range-labels">
         <span>{formatDateInput(startDate)}</span>
         <span>{formatDateInput(endDate)}</span>
+      </div>
+
+      <div class="date-navigation">
+        <button on:click={() => shiftDateRange(-7)}>-1W</button>
+        <button on:click={() => shiftDateRange(-1)}>-1D</button>
+        <button class="play-button" on:click={togglePlayPause}>
+          {#if isPlaying}
+            <span class="pause-icon">❚❚</span>
+          {:else}
+            <span class="play-icon">▶</span>
+          {/if}
+        </button>
+        <button on:click={() => shiftDateRange(1)}>+1D</button>
+        <button on:click={() => shiftDateRange(7)}>+1W</button>
       </div>
     </div>
   </div>
@@ -235,5 +295,38 @@
     justify-content: space-between;
     margin-top: 5px;
     font-size: 0.9rem;
+  }
+  .date-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    gap: 5px;
+  }
+  .date-navigation button {
+    flex: 1;
+    padding: 8px 0;
+    border: 1px solid #ddd;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+  }
+  .date-navigation button:hover {
+    background-color: #e0e0e0;
+  }
+  .play-button {
+    background-color: #4c8bf5 !important;
+    color: white;
+  }
+  .play-button:hover {
+    background-color: #3a78e0 !important;
+  }
+  .play-icon, .pause-icon {
+    display: inline-block;
+    font-size: 14px;
+  }
+  .pause-icon {
+    letter-spacing: -2px;
   }
 </style>
