@@ -6,10 +6,9 @@
   let data = [], columns = [], domainColumn = "", uniqueValues = [];
   let selectedValues = new Set(); 
   let opacity = 1, startDate = null, endDate = null;
-  let filteredData = [], allDates = [], currentScrubIndex = 0;
+  let filteredData = [], allDates = [];
 
-  $: currentScrubDate = allDates[currentScrubIndex] || null;
-  $: filteredData = data.filter(d => (!startDate || d.date >= startDate) && (!endDate || d.date <= currentScrubDate));
+  $: filteredData = data.filter(d => (!startDate || d.date >= startDate) && (!endDate || d.date <= endDate));
 
   onMount(async () => {
     const response = await fetch('/semantic-maps/data.csv');
@@ -29,7 +28,6 @@
 
     startDate = allDates[0];
     endDate = allDates[allDates.length - 1];
-    currentScrubIndex = allDates.length - 1;
   }
 
   function handleDomainChange(event) {
@@ -46,10 +44,8 @@
     const newDate = e.target.value ? new Date(e.target.value) : null;
     if (type === 'start') {
       startDate = newDate;
-      if (startDate > currentScrubDate) currentScrubIndex = allDates.findIndex(d => d >= startDate);
     } else {
       endDate = newDate;
-      if (endDate < currentScrubDate) currentScrubIndex = allDates.findIndex(d => d <= endDate);
     }
   }
 
@@ -102,8 +98,17 @@
       <input type="date" value={formatDateInput(endDate)} on:change={(e) => handleDateChange(e, 'end')} />
       
       <label>Date Scrubber:</label>
-      <input type="range" min="0" max={allDates.length - 1} bind:value={currentScrubIndex} />
-      <div class="current-date">{formatDateInput(currentScrubDate)}</div>
+      <input 
+        type="range" 
+        min="0" 
+        max={allDates.length - 1} 
+        value={allDates.findIndex(d => d >= endDate) }
+        on:input={(e) => {
+          const index = parseInt(e.target.value);
+          endDate = allDates[index] || allDates[allDates.length - 1];
+        }}
+      />
+      <div class="current-date">{formatDateInput(endDate)}</div>
     </div>
   </div>
 
@@ -128,7 +133,6 @@
     flex-direction: column;
     gap: 1rem;
     padding: 1rem;
-    /* border: 1px solid #ddd; */
     border-radius: 10px;
     background-color: #fafafa;
     width: 280px;
