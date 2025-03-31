@@ -7,8 +7,13 @@
   let selectedValues = new Set(); 
   let opacity = 1, startDate = null, endDate = null;
   let filteredData = [], allDates = [];
+  let startDateIndex = 0;
+  let endDateIndex = 0;
 
   $: filteredData = data.filter(d => (!startDate || d.date >= startDate) && (!endDate || d.date <= endDate));
+
+  $: startPercent = allDates.length > 1 ? (startDateIndex / (allDates.length - 1)) * 100 : 0;
+  $: endPercent = allDates.length > 1 ? (endDateIndex / (allDates.length - 1)) * 100 : 100;
 
   onMount(async () => {
     const response = await fetch('/semantic-maps/data.csv');
@@ -28,6 +33,8 @@
 
     startDate = allDates[0];
     endDate = allDates[allDates.length - 1];
+    startDateIndex = 0;
+    endDateIndex = allDates.length - 1;
   }
 
   function handleDomainChange(event) {
@@ -97,18 +104,35 @@
       <label>End Date:</label>
       <input type="date" value={formatDateInput(endDate)} on:change={(e) => handleDateChange(e, 'end')} />
       
-      <label>Date Scrubber:</label>
-      <input 
-        type="range" 
-        min="0" 
-        max={allDates.length - 1} 
-        value={allDates.findIndex(d => d >= endDate) }
-        on:input={(e) => {
-          const index = parseInt(e.target.value);
-          endDate = allDates[index] || allDates[allDates.length - 1];
-        }}
-      />
-      <div class="current-date">{formatDateInput(endDate)}</div>
+      <label>Date Range Slider:</label>
+      <div class="date-range-slider" style="--start-percent: {startPercent}%; --end-percent: {endPercent}%;">
+        <input 
+          type="range" 
+          min="0" 
+          max={allDates.length - 1} 
+          bind:value={startDateIndex}
+          on:input={() => {
+            if (startDateIndex > endDateIndex) startDateIndex = endDateIndex;
+            startDate = allDates[startDateIndex] || allDates[0];
+          }}
+          class="slider start-slider"
+        />
+        <input 
+          type="range" 
+          min="0" 
+          max={allDates.length - 1} 
+          bind:value={endDateIndex}
+          on:input={() => {
+            if (endDateIndex < startDateIndex) endDateIndex = startDateIndex;
+            endDate = allDates[endDateIndex] || allDates[allDates.length - 1];
+          }}
+          class="slider end-slider"
+        />
+      </div>
+      <div class="date-range-labels">
+        <span>{formatDateInput(startDate)}</span>
+        <span>{formatDateInput(endDate)}</span>
+      </div>
     </div>
   </div>
 
@@ -122,7 +146,6 @@
 </div>
 
 <style>
-
   .container {
     display: flex;
     gap: 1rem;
@@ -157,5 +180,60 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+  }
+  .date-range-slider {
+    position: relative;
+    height: 30px;
+    margin: 10px 0;
+  }
+  .slider {
+    position: absolute;
+    width: 100%;
+    pointer-events: none;
+    background: linear-gradient(
+      to right,
+      #ccc 0%,
+      #ccc var(--start-percent),
+      #4c8bf5 var(--start-percent),
+      #4c8bf5 var(--end-percent),
+      #ccc var(--end-percent),
+      #ccc 100%
+    );
+    appearance: none;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+  }
+  .slider::-webkit-slider-thumb {
+    pointer-events: auto;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border: 2px solid #4c8bf5;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .slider::-moz-range-thumb {
+    pointer-events: auto;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border: 2px solid #4c8bf5;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .start-slider::-webkit-slider-thumb {
+    z-index: 3;
+  }
+  .end-slider::-webkit-slider-thumb {
+    z-index: 3;
+  }
+  .date-range-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 0.9rem;
   }
 </style>
