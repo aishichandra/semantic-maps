@@ -6,10 +6,10 @@
     import { schemeCategory10 } from 'd3-scale-chromatic';
     
     export let data = [];
-    export let domainColumn;
-    export let opacity;
+    export let domainColumn = "";
+    export let opacity = 1;
     export let selectedValues = new Set();
-    export let searchQuery = '';
+    export let searchQuery = ""; // Receive the search query
 
     let canvas;
     let ctx;
@@ -40,12 +40,6 @@
       .domain([...new Set(data.map(d => d[domainColumn]))])
       .range(schemeCategory10);
     
-    // function resizeCanvas() {
-    //     containerWidth = window.innerWidth * 0.8;
-    //     containerHeight = window.innerHeight * 0.6;
-    //     draw();
-    // }
-    
     function draw() {
       ctx.clearRect(0, 0, containerWidth, containerHeight);
       ctx.save();
@@ -59,9 +53,8 @@
     
         ctx.beginPath();
         ctx.arc(margin.left + xScale(d.x), margin.top + yScale(d.y), radius, 0, Math.PI * 2);
+        ctx.globalAlpha = colorScale(d[domainColumn]);
         ctx.fillStyle = colorScale(d[domainColumn]);
-    
-        // Set opacity to 1 for highlighted or selected data, otherwise use the provided opacity
         ctx.globalAlpha = isHighlighted || isSelected ? 1 : opacity * 0.2;
         ctx.fill();
       });
@@ -112,7 +105,6 @@
     onMount(() => {
       ctx = canvas.getContext('2d');
       draw();
-      // window.addEventListener('resize', resizeCanvas);
     });
     
     $: if (ctx && data.length) draw();

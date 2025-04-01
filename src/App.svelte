@@ -15,8 +15,7 @@
 
   $: filteredData = data.filter(d =>
     (!startDate || d.date >= startDate) &&
-    (!endDate || d.date <= endDate) &&
-    (searchQuery.trim() === "" || (d.title && d.title.toLowerCase().includes(searchQuery.toLowerCase())))
+    (!endDate || d.date <= endDate)
   );
 
   $: startPercent = allDates.length > 1 ? (startDateIndex / (allDates.length - 1)) * 100 : 0;
@@ -140,7 +139,15 @@
           <summary>What is a Semantic Map?</summary>
           <div class="nerd-box-content">
             <p>
-              A <strong>semantic map</strong> visualizes text data by meaning—closer dots are more similar.
+              A <strong>semantic map</strong> is a visual representation of the relationships between text data based on their meaning or content.
+            </p>
+            <br />
+            <p>
+              This tool allows you to explore the semantic map of various organizations by visualizing their relationships in a scatterplot format.
+            </p>
+            <br />
+            <p>
+              To get started...
             </p>
             <ul>
               <li>📁 Upload a CSV with <code>x</code>, <code>y</code>, and <code>date</code> columns</li>
@@ -221,15 +228,14 @@
       </div>
     </div>
 
-    <!-- Scatterplot Area -->
     <div class="scatterplot-container">
       {#if filteredData.length}
         <Scatterplot 
-          data={filteredData}
-          {domainColumn}
-          {selectedValues}
-          {opacity}
-          {searchQuery}
+          data={filteredData} 
+          {domainColumn} 
+          {selectedValues} 
+          {opacity} 
+          {searchQuery} 
         />
       {:else}
         <p>Loading data...</p>
@@ -408,7 +414,7 @@
   }
 
   .nerd-box-content ul {
-    padding-left: 1.2rem;
+    padding-left: 1rem;
   }
 
   .nerd-box code {
