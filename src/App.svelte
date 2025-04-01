@@ -3,7 +3,7 @@
   import Papa from 'papaparse';
   import Scatterplot from './components/Scatterplot.svelte';
 
-  let data = [], columns = [], domainColumn = "", uniqueValues = [];
+  let data = [], columns = [], domainColumn = "org", uniqueValues = [];
   let selectedValues = new Set(); 
   let opacity = 1, startDate = null, endDate = null;
   let filteredData = [], allDates = [];
@@ -11,8 +11,13 @@
   let endDateIndex = 0;
   let isPlaying = false;
   let playInterval = null;
+  let searchQuery = "";
 
-  $: filteredData = data.filter(d => (!startDate || d.date >= startDate) && (!endDate || d.date <= endDate));
+  $: filteredData = data.filter(d =>
+    (!startDate || d.date >= startDate) &&
+    (!endDate || d.date <= endDate) &&
+    (searchQuery.trim() === "" || (d.title && d.title.toLowerCase().includes(searchQuery.toLowerCase())))
+  );
 
   $: startPercent = allDates.length > 1 ? (startDateIndex / (allDates.length - 1)) * 100 : 0;
   $: endPercent = allDates.length > 1 ? (endDateIndex / (allDates.length - 1)) * 100 : 100;
@@ -41,6 +46,10 @@
     endDate = allDates[allDates.length - 1];
     startDateIndex = 0;
     endDateIndex = allDates.length - 1;
+
+    if (domainColumn) {
+      uniqueValues = [...new Set(data.map(d => d[domainColumn]).filter(Boolean))];
+    }
   }
 
   function handleDomainChange(event) {
@@ -55,11 +64,8 @@
 
   function handleDateChange(e, type) {
     const newDate = e.target.value ? new Date(e.target.value) : null;
-    if (type === 'start') {
-      startDate = newDate;
-    } else {
-      endDate = newDate;
-    }
+    if (type === 'start') startDate = newDate;
+    else endDate = newDate;
   }
 
   function formatDateInput(date) {
@@ -100,152 +106,233 @@
     if (isPlaying) {
       clearInterval(playInterval);
       isPlaying = false;
-      playInterval = null;
     } else {
       isPlaying = true;
       playInterval = setInterval(() => {
         if (endDateIndex >= allDates.length - 1) {
           clearInterval(playInterval);
           isPlaying = false;
-          playInterval = null;
           return;
         }
         shiftDateRange(1);
       }, 500);
     }
   }
+
+  function handleSearch(event) {
+    searchQuery = event.target.value;
+  }
 </script>
 
+<!-- App Layout -->
 <div class="container">
-  <div class="filter-panel">
-    <label>Upload CSV File:</label>
-    <input type="file" accept=".csv" on:change={handleFileUpload} />
-
-    {#if columns.length}
-      <label>Select a column for coloring:</label>
-      <select on:change={handleDomainChange} bind:value={domainColumn}>
-        <option value="" disabled selected>Select column</option>
-        {#each columns as column}
-          <option value={column}>{column}</option>
-        {/each}
-      </select>
-    {/if}
-
-    {#if uniqueValues.length}
-      <label>Select values to highlight:</label>
-      <select multiple size="5" class="multi-select" on:change={handleSelectionChange}>
-        {#each uniqueValues as value}
-          <option value={value}>{value}</option>
-        {/each}
-      </select>
-    {/if}
-
-    <label>Adjust Opacity:</label>
-    <input type="range" min="0.01" max="1" step="0.1" bind:value={opacity} />
-
-    <div class="date-controls">
-      <label>Start Date:</label>
-      <input type="date" value={formatDateInput(startDate)} on:change={(e) => handleDateChange(e, 'start')} />
-      
-      <label>End Date:</label>
-      <input type="date" value={formatDateInput(endDate)} on:change={(e) => handleDateChange(e, 'end')} />
-      
-      <label>Date Range Slider:</label>
-      <div class="date-range-slider" style="--start-percent: {startPercent}%; --end-percent: {endPercent}%;">
-        <input 
-          type="range" 
-          min="0" 
-          max={allDates.length - 1} 
-          bind:value={startDateIndex}
-          on:input={() => {
-            if (startDateIndex > endDateIndex) startDateIndex = endDateIndex;
-            startDate = allDates[startDateIndex] || allDates[0];
-          }}
-          class="slider start-slider"
-        />
-        <input 
-          type="range" 
-          min="0" 
-          max={allDates.length - 1} 
-          bind:value={endDateIndex}
-          on:input={() => {
-            if (endDateIndex < startDateIndex) endDateIndex = startDateIndex;
-            endDate = allDates[endDateIndex] || allDates[allDates.length - 1];
-          }}
-          class="slider end-slider"
-        />
-      </div>
-      <div class="date-range-labels">
-        <span>{formatDateInput(startDate)}</span>
-        <span>{formatDateInput(endDate)}</span>
-      </div>
-
-      <div class="date-navigation">
-        <button on:click={() => shiftDateRange(-7)}>-1W</button>
-        <button on:click={() => shiftDateRange(-1)}>-1D</button>
-        <button class="play-button" on:click={togglePlayPause}>
-          {#if isPlaying}
-            <span class="pause-icon">❚❚</span>
-          {:else}
-            <span class="play-icon">▶</span>
-          {/if}
-        </button>
-        <button on:click={() => shiftDateRange(1)}>+1D</button>
-        <button on:click={() => shiftDateRange(7)}>+1W</button>
-      </div>
-    </div>
+  <div class="title-section">
+    <h1 class="title">Interactive Semantic Maps</h1>
+    <p class="subtitle">The default dataset shows the semantic map of three North Carolina organizations</p>
   </div>
 
-  <div class="scatterplot-container">
-    {#if filteredData.length}
-      <Scatterplot data={filteredData} {domainColumn} {selectedValues} {opacity} />
-    {:else}
-      <p>Loading data...</p>
-    {/if}
+  <div class="content">
+    <!-- Filters Panel -->
+    <div class="filter-panel">
+
+      <div class="nerd-box">
+        <details open>
+          <summary>What is a Semantic Map?</summary>
+          <div class="nerd-box-content">
+            <p>
+              A <strong>semantic map</strong> visualizes text data by meaning—closer dots are more similar.
+            </p>
+            <ul>
+              <li>📁 Upload a CSV with <code>x</code>, <code>y</code>, and <code>date</code> columns</li>
+              <li>🎨 Color by a metadata column</li>
+              <li>🔍 Search by keyword or filter by category</li>
+              <li>⏱ Animate or drag date range to explore changes</li>
+            </ul>
+          </div>
+        </details>
+      </div>
+
+      <label>📁 Upload CSV:</label>
+      <input type="file" accept=".csv" on:change={handleFileUpload} />
+
+      {#if columns.length}
+        <label>🎨 Color by Column:</label>
+        <select on:change={handleDomainChange} bind:value={domainColumn}>
+          <option value="" disabled>Select column</option>
+          {#each columns as column}
+            <option value={column}>{column}</option>
+          {/each}
+        </select>
+      {/if}
+
+      {#if uniqueValues.length}
+        <label>✨ Highlight Values:</label>
+        <select multiple size="5" class="multi-select" on:change={handleSelectionChange}>
+          {#each uniqueValues as value}
+            <option value={value}>{value}</option>
+          {/each}
+        </select>
+      {/if}
+
+      <label>🔍 Search Title:</label>
+      <input type="text" placeholder="Search..." on:input={handleSearch} />
+
+      <label>💡 Adjust Opacity:</label>
+      <input type="range" min="0.01" max="1" step="0.1" bind:value={opacity} />
+
+      <div class="date-controls">
+        <label>📅 Date Range:</label>
+        <input type="date" value={formatDateInput(startDate)} on:change={(e) => handleDateChange(e, 'start')} />
+        <input type="date" value={formatDateInput(endDate)} on:change={(e) => handleDateChange(e, 'end')} />
+
+        <div class="date-range-slider" style="--start-percent: {startPercent}%; --end-percent: {endPercent}%;">
+          <input type="range" min="0" max={allDates.length - 1} bind:value={startDateIndex}
+            on:input={() => {
+              if (startDateIndex > endDateIndex) startDateIndex = endDateIndex;
+              startDate = allDates[startDateIndex];
+            }}
+            class="slider start-slider" />
+          <input type="range" min="0" max={allDates.length - 1} bind:value={endDateIndex}
+            on:input={() => {
+              if (endDateIndex < startDateIndex) endDateIndex = startDateIndex;
+              endDate = allDates[endDateIndex];
+            }}
+            class="slider end-slider" />
+        </div>
+
+        <div class="date-range-labels">
+          <span>{formatDateInput(startDate)}</span>
+          <span>{formatDateInput(endDate)}</span>
+        </div>
+
+        <div class="date-navigation">
+          <button on:click={() => shiftDateRange(-7)}>-1W</button>
+          <button on:click={() => shiftDateRange(-1)}>-1D</button>
+          <button class="play-button" on:click={togglePlayPause}>
+            {#if isPlaying}
+              ❚❚
+            {:else}
+              ▶
+            {/if}
+          </button>
+          <button on:click={() => shiftDateRange(1)}>+1D</button>
+          <button on:click={() => shiftDateRange(7)}>+1W</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scatterplot Area -->
+    <div class="scatterplot-container">
+      {#if filteredData.length}
+        <Scatterplot 
+          data={filteredData}
+          {domainColumn}
+          {selectedValues}
+          {opacity}
+          {searchQuery}
+        />
+      {:else}
+        <p>Loading data...</p>
+      {/if}
+    </div>
   </div>
 </div>
 
 <style>
   .container {
-    display: flex;
-    gap: 1rem;
     padding: 1rem;
-  }
-  .filter-panel {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .title-section {
+    text-align: center;
+  }
+
+  .title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+    color: #666;
+  }
+
+  .content {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .filter-panel {
+    background: #f9fafb;
     padding: 1rem;
     border-radius: 10px;
-    background-color: #fafafa;
-    width: 280px;
+    width: 300px; /* Fixed width for the panel */
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   }
+
   .filter-panel label {
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 0.9rem;
   }
-  .multi-select option {
-    padding: 6px;
+
+  .filter-panel input,
+  .filter-panel select {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%; /* Make inputs and selects take full width of the panel */
+    box-sizing: border-box; /* Ensure padding doesn't affect width */
   }
+
+  .multi-select {
+    max-height: 150px;
+    overflow-y: auto;
+    width: 100%; 
+  }
+
+  .filter-panel input:focus,
+  .filter-panel select:focus {
+    outline: none;
+    border-color: #4c8bf5;
+    box-shadow: 0 0 4px rgba(76, 139, 245, 0.5);
+  }
+
   .scatterplot-container {
     flex-grow: 1;
     display: flex;
     justify-content: center;
     align-items: center;
+    background: #fff;
+    border-radius: 10px;
+    min-height: 500px;
+    padding: 1rem;
+    /* box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05); */
   }
-  .current-date {
-    font-size: 0.9rem;
-    margin-top: 5px;
+
+  .date-controls label {
+    display: block; 
+    margin-bottom: 0.5rem; 
+    font-weight: 600; 
   }
-  .date-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+
+  .date-controls input[type="date"] {
+    margin-bottom: 0.5rem;
   }
+
   .date-range-slider {
-    position: relative;
     height: 30px;
-    margin: 10px 0;
+    position: relative;
   }
+
   .slider {
     position: absolute;
     width: 100%;
@@ -260,11 +347,11 @@
       #ccc 100%
     );
     appearance: none;
-    -webkit-appearance: none;
     height: 6px;
     border-radius: 3px;
     outline: none;
   }
+
   .slider::-webkit-slider-thumb {
     pointer-events: auto;
     -webkit-appearance: none;
@@ -275,58 +362,59 @@
     border-radius: 50%;
     cursor: pointer;
   }
-  .slider::-moz-range-thumb {
-    pointer-events: auto;
-    width: 18px;
-    height: 18px;
-    background: white;
-    border: 2px solid #4c8bf5;
-    border-radius: 50%;
-    cursor: pointer;
-  }
-  .start-slider::-webkit-slider-thumb {
-    z-index: 3;
-  }
-  .end-slider::-webkit-slider-thumb {
-    z-index: 3;
-  }
+
   .date-range-labels {
     display: flex;
     justify-content: space-between;
-    margin-top: 5px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    color: #444;
   }
+
   .date-navigation {
     display: flex;
+    gap: 0.5rem;
     justify-content: space-between;
-    margin-top: 10px;
-    gap: 5px;
   }
+
   .date-navigation button {
     flex: 1;
-    padding: 8px 0;
-    border: 1px solid #ddd;
-    background-color: #f5f5f5;
+    padding: 0.4rem;
+    font-size: 0.85rem;
+    background: #f0f0f0;
+    border: 1px solid #ccc;
     border-radius: 4px;
     cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.2s;
   }
-  .date-navigation button:hover {
-    background-color: #e0e0e0;
-  }
+
   .play-button {
-    background-color: #4c8bf5 !important;
+    background: #4c8bf5;
     color: white;
+    font-weight: bold;
   }
-  .play-button:hover {
-    background-color: #3a78e0 !important;
+
+  .nerd-box {
+    background: #eef5ff;
+    /* border-left: 4px solid #4c8bf5; */
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    line-height: 1.5;
   }
-  .play-icon, .pause-icon {
-    display: inline-block;
-    font-size: 14px;
+
+  .nerd-box summary {
+    font-weight: bold;
+    cursor: pointer;
+    list-style: none;
   }
-  .pause-icon {
-    letter-spacing: -2px;
+
+  .nerd-box-content ul {
+    padding-left: 1.2rem;
+  }
+
+  .nerd-box code {
+    background: #e1e1e1;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-family: monospace;
   }
 </style>

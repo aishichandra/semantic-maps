@@ -44,6 +44,7 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     height: fit-content;
     max-height: 500px;
+    max-width: 800px;
     overflow-y: auto;
     line-height: 1.5;
   }

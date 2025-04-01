@@ -9,7 +9,8 @@
     export let domainColumn;
     export let opacity;
     export let selectedValues = new Set();
-    
+    export let searchQuery = '';
+
     let canvas;
     let ctx;
     
@@ -39,11 +40,11 @@
       .domain([...new Set(data.map(d => d[domainColumn]))])
       .range(schemeCategory10);
     
-    function resizeCanvas() {
-        containerWidth = window.innerWidth * 0.8;
-        containerHeight = window.innerHeight * 0.6;
-        draw();
-    }
+    // function resizeCanvas() {
+    //     containerWidth = window.innerWidth * 0.8;
+    //     containerHeight = window.innerHeight * 0.6;
+    //     draw();
+    // }
     
     function draw() {
       ctx.clearRect(0, 0, containerWidth, containerHeight);
@@ -53,11 +54,15 @@
       ctx.translate(-zoomCenter.x, -zoomCenter.y);
     
       data.forEach(d => {
-        if (hoveredData && hoveredData === d) return;
+        const isHighlighted = searchQuery && d.title && d.title.toLowerCase().includes(searchQuery.toLowerCase());
+        const isSelected = selectedValues.has(d[domainColumn]);
+    
         ctx.beginPath();
         ctx.arc(margin.left + xScale(d.x), margin.top + yScale(d.y), radius, 0, Math.PI * 2);
         ctx.fillStyle = colorScale(d[domainColumn]);
-        ctx.globalAlpha = selectedValues.has(d[domainColumn]) ? 1 : opacity * 0.3;
+    
+        // Set opacity to 1 for highlighted or selected data, otherwise use the provided opacity
+        ctx.globalAlpha = isHighlighted || isSelected ? 1 : opacity * 0.2;
         ctx.fill();
       });
     
@@ -65,7 +70,7 @@
         ctx.beginPath();
         ctx.arc(margin.left + xScale(hoveredData.x), margin.top + yScale(hoveredData.y), radius, 0, Math.PI * 2);
         ctx.fillStyle = colorScale(hoveredData[domainColumn]);
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = 1; // Ensure hovered data is fully opaque
         ctx.fill();
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 2;
@@ -107,7 +112,7 @@
     onMount(() => {
       ctx = canvas.getContext('2d');
       draw();
-      window.addEventListener('resize', resizeCanvas);
+      // window.addEventListener('resize', resizeCanvas);
     });
     
     $: if (ctx && data.length) draw();
@@ -141,5 +146,57 @@
       background-color: white;
       max-width: 100%;
       height: auto;
+    }
+
+    .filter-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem; /* Increase spacing between elements */
+      padding: 1.5rem; /* Add more padding for better readability */
+      border-radius: 10px;
+      background-color: #f9f9f9; /* Softer background color */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+      width: 300px; /* Slightly wider panel for better layout */
+    }
+
+    .filter-panel label {
+      font-weight: bold;
+      font-size: 1rem; /* Increase font size for labels */
+      color: #333; /* Darker text for better contrast */
+    }
+
+    .filter-panel input,
+    .filter-panel select {
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 0.9rem; /* Consistent font size for inputs */
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .filter-panel input:focus,
+    .filter-panel select:focus {
+      outline: none;
+      border-color: #4c8bf5;
+      box-shadow: 0 0 4px rgba(76, 139, 245, 0.5);
+    }
+
+    .filter-panel .multi-select {
+      height: auto;
+      max-height: 150px; /* Limit height for better readability */
+      overflow-y: auto; /* Add scroll for long lists */
+    }
+
+    .filter-panel .section {
+      border-top: 1px solid #ddd; /* Add a separator between sections */
+      padding-top: 1rem;
+      margin-top: 1rem;
+    }
+
+    .filter-panel .section:first-child {
+      border-top: none; /* Remove separator for the first section */
+      padding-top: 0;
+      margin-top: 0;
     }
 </style>
