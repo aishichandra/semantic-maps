@@ -9,7 +9,12 @@
     export let domainColumn = "";
     export let opacity = 1;
     export let selectedValues = new Set();
-    export let searchQuery = ""; // Receive the search query
+    export let searchQuery = ""; 
+
+    let annotations = [
+        { x: 500, y: 400, radius: 30, label: "Cluster 2", label_x: 30, label_y: -20 },
+        { x: 720, y: 170, radius: 50, label: "Cluster 1", label_x: 10, label_y: 70 }
+    ];
 
     let canvas;
     let ctx;
@@ -46,30 +51,50 @@
       ctx.translate(zoomCenter.x, zoomCenter.y);
       ctx.scale(zoomScale, zoomScale);
       ctx.translate(-zoomCenter.x, -zoomCenter.y);
-    
+
+      // Draw data points
       data.forEach(d => {
         const isHighlighted = searchQuery && d.title && d.title.toLowerCase().includes(searchQuery.toLowerCase());
         const isSelected = selectedValues.has(d[domainColumn]);
-    
+
         ctx.beginPath();
         ctx.arc(margin.left + xScale(d.x), margin.top + yScale(d.y), radius, 0, Math.PI * 2);
-        ctx.globalAlpha = colorScale(d[domainColumn]);
         ctx.fillStyle = colorScale(d[domainColumn]);
-        ctx.globalAlpha = isHighlighted || isSelected ? 1 : opacity * 0.2;
+        ctx.globalAlpha = isHighlighted || isSelected ? 1 : opacity * 0.4;
         ctx.fill();
       });
-    
+
+      // Draw annotations
+      annotations.forEach(annotation => {
+        ctx.globalAlpha = 1; 
+        ctx.beginPath();
+        ctx.arc(annotation.x, annotation.y, annotation.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.stroke();
+
+        // Draw label
+        if (annotation.label) {
+          ctx.font = "14px Arial";
+          ctx.fillStyle = "red";
+          ctx.fillText(annotation.label, annotation.x + annotation.label_x, annotation.y + annotation.label_y);
+        }
+      });
+
+      ctx.setLineDash([]); // Reset line dash
+
       if (hoveredData) {
         ctx.beginPath();
         ctx.arc(margin.left + xScale(hoveredData.x), margin.top + yScale(hoveredData.y), radius, 0, Math.PI * 2);
         ctx.fillStyle = colorScale(hoveredData[domainColumn]);
-        ctx.globalAlpha = 1; // Ensure hovered data is fully opaque
+        ctx.globalAlpha = 1; 
         ctx.fill();
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 2;
         ctx.stroke();
       }
-    
+
       ctx.restore();
     }
     
@@ -145,7 +170,7 @@
       flex-direction: column;
       gap: 1.5rem; /* Increase spacing between elements */
       padding: 1.5rem; /* Add more padding for better readability */
-      border-radius: 10px;
+      border-radius: 10px; /* Rounded corners */
       background-color: #f9f9f9; /* Softer background color */
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
       width: 300px; /* Slightly wider panel for better layout */

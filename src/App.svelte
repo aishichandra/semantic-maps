@@ -5,7 +5,7 @@
 
   let data = [], columns = [], domainColumn = "org", uniqueValues = [];
   let selectedValues = new Set(); 
-  let opacity = 1, startDate = null, endDate = null;
+  let opacity = 0.5, startDate = null, endDate = null;
   let filteredData = [], allDates = [];
   let startDateIndex = 0;
   let endDateIndex = 0;
@@ -126,8 +126,8 @@
 <!-- App Layout -->
 <div class="container">
   <div class="title-section">
-    <h1 class="title">Interactive Semantic Maps</h1>
-    <p class="subtitle">The default dataset shows the semantic map of three North Carolina organizations</p>
+    <h1 class="title">North Carolina Semantic Map [DEMO]</h1>
+    <p class="subtitle">This semantic map contains data from three organizations in North Carolina. <a href = "https://peacemakeronline.com/">Carolina Peacemaker</a> and <a href = "https://borderbelt.org">Border Belt</a> are local news organizations and <a href= "https://www.nccoast.org/about-us/">NC Coastal Federation</a> is a nonprofit focused on coastal restoration.</p>
   </div>
 
   <div class="content">
@@ -135,32 +135,29 @@
     <div class="filter-panel">
 
       <div class="nerd-box">
-        <details open>
-          <summary>What is a Semantic Map?</summary>
+        <details>
+          <summary>➕ What is a Semantic Map?</summary>
           <div class="nerd-box-content">
             <p>
-              A <strong>semantic map</strong> is a visual representation of the relationships between text data based on their meaning or content.
+              Semantic maps are tools that allow users to visually explore how different topics and ideas are connected. 
+              By analyzing the relationships between articles, these maps can reveal patterns and clusters in the data.
             </p>
-            <br />
             <p>
-              This tool allows you to explore the semantic map of various organizations by visualizing their relationships in a scatterplot format.
-            </p>
-            <br />
-            <p>
-              To get started...
+              Newsrooms can use semantic maps to:
             </p>
             <ul>
-              <li>📁 Upload a CSV with <code>x</code>, <code>y</code>, and <code>date</code> columns</li>
-              <li>🎨 Color by a metadata column</li>
-              <li>🔍 Search by keyword or filter by category</li>
-              <li>⏱ Animate or drag date range to explore changes</li>
+              <li>Audit their coverage by identifying themes that may be underrepresented or overlooked.</li>
+              <li>Track how their editorial focus evolves over time.</li>
+              <li>Discover which topics are being covered by other outlets, offering opportunities to adjust their editorial focus or collaborate.</li>
             </ul>
           </div>
         </details>
       </div>
 
-      <label>📁 Upload CSV:</label>
-      <input type="file" accept=".csv" on:change={handleFileUpload} />
+      <!-- <label>📁 Upload CSV:</label>
+      <input type="file" accept=".csv" on:change={handleFileUpload} /> -->
+      <label>🔍 Search Title:</label>
+      <input type="text" placeholder="Search..." on:input={handleSearch} />
 
       {#if columns.length}
         <label>🎨 Color by Column:</label>
@@ -180,9 +177,6 @@
           {/each}
         </select>
       {/if}
-
-      <label>🔍 Search Title:</label>
-      <input type="text" placeholder="Search..." on:input={handleSearch} />
 
       <label>💡 Adjust Opacity:</label>
       <input type="range" min="0.01" max="1" step="0.1" bind:value={opacity} />
@@ -266,6 +260,9 @@
   .subtitle {
     font-size: 1.1rem;
     color: #666;
+    width: 60%;
+    margin: 0 auto;
+    line-height: 1.5;
   }
 
   .content {
@@ -281,7 +278,6 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   }
 
   .filter-panel label {
@@ -309,7 +305,6 @@
   .filter-panel select:focus {
     outline: none;
     border-color: #4c8bf5;
-    box-shadow: 0 0 4px rgba(76, 139, 245, 0.5);
   }
 
   .scatterplot-container {
@@ -400,27 +395,36 @@
 
   .nerd-box {
     background: #eef5ff;
-    /* border-left: 4px solid #4c8bf5; */
-    padding: 0.75rem;
+    border: 1px solid #4c8bf5;
+    padding: 1rem;
     border-radius: 8px;
-    font-size: 0.85rem;
-    line-height: 1.5;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
   }
 
   .nerd-box summary {
+    /* toggle */
+    
     font-weight: bold;
     cursor: pointer;
     list-style: none;
+    margin-bottom: 0.5rem;
+  }
+
+  .nerd-box-content p {
+    margin-bottom: 1rem;
+    color: #444;
   }
 
   .nerd-box-content ul {
-    padding-left: 1rem;
+    list-style-type: disc; /* Add bullet points */
+    padding-left: 1.5rem; /* Indent the list */
+    margin-bottom: 1rem; /* Add spacing below the list */
   }
 
-  .nerd-box code {
-    background: #e1e1e1;
-    border-radius: 3px;
-    padding: 2px 4px;
-    font-family: monospace;
+  .nerd-box-content li {
+    margin-bottom: 0.5rem; /* Add spacing between list items */
+    color: #444;
   }
 </style>
