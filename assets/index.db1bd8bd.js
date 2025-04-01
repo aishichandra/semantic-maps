@@ -16,6 +16,7 @@ License: MIT
     <p class="subtitle svelte-1qe8tcr">This semantic map contains data from three organizations in North Carolina. <a href="https://peacemakeronline.com/">Carolina Peacemaker</a> and <a href="https://borderbelt.org">Border Belt</a> are local news organizations and <a href="https://www.nccoast.org/about-us/">NC Coastal Federation</a> is a nonprofit focused on coastal restoration.</p>`,r=te(),i=A("div"),a=A("div"),u=A("div"),u.innerHTML=`<details><summary class="svelte-1qe8tcr">\u2795 What is a Semantic Map?</summary> 
           <div class="nerd-box-content svelte-1qe8tcr"><p class="svelte-1qe8tcr">Semantic maps are tools that allow users to visually explore how different topics and ideas are connected. 
               By analyzing the relationships between articles, these maps can reveal patterns and clusters in the data.</p> 
+            <p class="svelte-1qe8tcr">Each dot in this semantic map represents an article. When the dots are closer together, the articles are similar in meaning.</p> 
             <p class="svelte-1qe8tcr">Newsrooms can use semantic maps to:</p> 
             <ul class="svelte-1qe8tcr"><li class="svelte-1qe8tcr">Audit their coverage by identifying themes that may be underrepresented or overlooked.</li> 
               <li class="svelte-1qe8tcr">Track how their editorial focus evolves over time.</li> 
