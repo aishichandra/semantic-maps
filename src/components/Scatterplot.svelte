@@ -12,8 +12,8 @@
     export let searchQuery = ""; 
 
     let annotations = [
-        { x: 500, y: 400, radius: 30, label: "Cluster 2", label_x: 30, label_y: -20 },
-        { x: 720, y: 170, radius: 50, label: "Cluster 1", label_x: 10, label_y: 70 }
+        { x: 500, y: 400, radius: 30, label: "Border Belt Independent and North Carolina Coastal Federation have both published about GenX — an industrial chemical", label_x: 100, label_y: -90 },
+        { x: 720, y: 170, radius: 50, label: "Only Carolina Peacemaker seems to be publishing about personal health", label_x: -70, label_y: 80 }
     ];
 
     let canvas;
@@ -66,7 +66,9 @@
 
       // Draw annotations
       annotations.forEach(annotation => {
-        ctx.globalAlpha = 1; 
+        ctx.globalAlpha = 1;
+
+        // Draw annotation circle
         ctx.beginPath();
         ctx.arc(annotation.x, annotation.y, annotation.radius, 0, Math.PI * 2);
         ctx.strokeStyle = "red";
@@ -74,11 +76,50 @@
         ctx.setLineDash([5, 5]);
         ctx.stroke();
 
-        // Draw label
+        // Calculate the starting point of the line on the circle's outline
+        const labelX = annotation.x + annotation.label_x;
+        const labelY = annotation.y + annotation.label_y;
+        const angle = Math.atan2(labelY - annotation.y, labelX - annotation.x); // Angle between circle center and label
+        const startX = annotation.x + annotation.radius * Math.cos(angle); // X-coordinate on the circle's outline
+        const startY = annotation.y + annotation.radius * Math.sin(angle); // Y-coordinate on the circle's outline
+
+        // Draw line connecting the circle outline to the label
+        ctx.setLineDash([]); // Solid line for the connector
+        ctx.beginPath();
+        ctx.moveTo(startX, startY); // Start at the circle's outline
+        ctx.lineTo(labelX, labelY); // Draw to the label position
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw label with wrapping
         if (annotation.label) {
-          ctx.font = "14px Arial";
+          const maxWidth = 150; // Maximum width for the label
+          const lineHeight = 12; // Line height for wrapped text
+
+          ctx.font = "11px Arial";
           ctx.fillStyle = "red";
-          ctx.fillText(annotation.label, annotation.x + annotation.label_x, annotation.y + annotation.label_y);
+
+          // Split the label into multiple lines if necessary
+          const words = annotation.label.split(" ");
+          let line = "";
+          let y = labelY;
+
+          words.forEach((word, index) => {
+            const testLine = line + word + " ";
+            const testWidth = ctx.measureText(testLine).width;
+
+            if (testWidth > maxWidth && index > 0) {
+              ctx.fillText(line, labelX, y);
+              line = word + " ";
+              y += lineHeight;
+            } else {
+              line = testLine;
+            }
+          });
+
+          // Draw the remaining text
+          ctx.fillText(line, labelX, y);
         }
       });
 
@@ -88,7 +129,7 @@
         ctx.beginPath();
         ctx.arc(margin.left + xScale(hoveredData.x), margin.top + yScale(hoveredData.y), radius, 0, Math.PI * 2);
         ctx.fillStyle = colorScale(hoveredData[domainColumn]);
-        ctx.globalAlpha = 1; 
+        ctx.globalAlpha = 1;
         ctx.fill();
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 2;
