@@ -225,14 +225,15 @@
         </details>
       </div>
 
-      <label>📁 Upload CSV:</label>
-      <input type="file" accept=".csv" on:change={handleFileUpload} />
-      <label>🔍 Search Title:</label>
-      <input type="text" placeholder="Search..." on:input={handleSearch} />
+      <label for="file-upload">📁 Upload CSV:</label>
+      <input id="file-upload" type="file" accept=".csv" on:change={handleFileUpload} />
+      
+      <label for="search-input">🔍 Search Title:</label>
+      <input id="search-input" type="text" placeholder="Search..." on:input={handleSearch} />
 
       {#if columns.length}
-        <label>🎨 Color by Column:</label>
-        <select on:change={handleDomainChange} bind:value={domainColumn}>
+        <label for="domain-column">🎨 Color by Column:</label>
+        <select id="domain-column" on:change={handleDomainChange} bind:value={domainColumn}>
           <option value="" disabled>Select column</option>
           {#each columns as column}
             <option value={column}>{column}</option>
@@ -241,21 +242,21 @@
       {/if}
 
       {#if uniqueValues.length}
-        <label>✨ Highlight Values:</label>
-        <select multiple size="5" class="multi-select" on:change={handleSelectionChange}>
+        <label for="value-select">✨ Highlight Values:</label>
+        <select id="value-select" multiple size="5" class="multi-select" on:change={handleSelectionChange}>
           {#each uniqueValues as value}
             <option value={value}>{value}</option>
           {/each}
         </select>
       {/if}
 
-      <label>💡 Adjust Opacity:</label>
-      <input type="range" min="0.01" max="1" step="0.1" bind:value={opacity} on:input={handleOpacityChange} />
+      <label for="opacity-slider">💡 Adjust Opacity:</label>
+      <input id="opacity-slider" type="range" min="0.01" max="1" step="0.1" bind:value={opacity} on:input={handleOpacityChange} />
 
       <div class="date-controls">
-        <label>📅 Date Range:</label>
-        <input type="date" value={formatDateInput(startDate)} on:change={(e) => handleDateChange(e, 'start')} />
-        <input type="date" value={formatDateInput(endDate)} on:change={(e) => handleDateChange(e, 'end')} />
+        <label for="start-date">📅 Date Range:</label>
+        <input id="start-date" type="date" value={formatDateInput(startDate)} on:change={(e) => handleDateChange(e, 'start')} />
+        <input id="end-date" type="date" value={formatDateInput(endDate)} on:change={(e) => handleDateChange(e, 'end')} />
 
         <RangeSlider 
           min={0} 
@@ -398,57 +399,6 @@
 
   .date-controls input[type="date"] {
     margin-bottom: 0.5rem;
-  }
-
-  .date-range-slider {
-    height: 30px;
-    position: relative;
-  }
-
-  .slider {
-    position: absolute;
-    width: 100%;
-    pointer-events: none;
-    background: linear-gradient(
-      to right,
-      #ccc 0%,
-      #ccc var(--start-percent),
-      #4c8bf5 var(--start-percent),
-      #4c8bf5 var(--end-percent),
-      #ccc var(--end-percent),
-      #ccc 100%
-    );
-    appearance: none;
-    height: 6px;
-    border-radius: 3px;
-    outline: none;
-  }
-
-  /* Add specific z-index for both sliders */
-  .start-slider {
-    z-index: 1;
-  }
-
-  .end-slider {
-    z-index: 1;
-  }
-
-  /* Make start slider visible when hovered or active */
-  .start-slider:hover,
-  .start-slider:active {
-    z-index: 1;
-  }
-
-  .slider::-webkit-slider-thumb {
-    pointer-events: auto;
-    -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    background: white;
-    border: 2px solid #4c8bf5;
-    border-radius: 50%;
-    cursor: pointer;
-    z-index: 3; /* Ensure thumb is always on top */
   }
 
   .date-range-labels {
