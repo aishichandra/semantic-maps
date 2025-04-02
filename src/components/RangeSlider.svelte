@@ -14,6 +14,7 @@
   let isDragging = false;
   let currentThumb = null;
   let sliderRect = null;
+  let rangeWidth = 0; // Store width of range when dragging center
   
   $: startPercent = max > min ? ((startValue - min) / (max - min)) * 100 : 0;
   $: endPercent = max > min ? ((endValue - min) / (max - min)) * 100 : 100;
@@ -22,6 +23,12 @@
     isDragging = true;
     currentThumb = thumb;
     sliderRect = slider.getBoundingClientRect();
+    
+    if (thumb === 'range') {
+      // Store the width of the range for maintaining during drag
+      rangeWidth = endValue - startValue;
+    }
+    
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
   }
@@ -35,8 +42,33 @@
     if (currentThumb === 'start') {
       startValue = Math.min(newValue, endValue);
       dispatch('startChange', startValue);
-    } else {
+    } else if (currentThumb === 'end') {
       endValue = Math.max(newValue, startValue);
+      dispatch('endChange', endValue);
+    } else if (currentThumb === 'range') {
+      // Move entire range, keeping width constant
+      let newStart = newValue - Math.floor(rangeWidth / 2);
+      let newEnd = newValue + Math.ceil(rangeWidth / 2);
+      
+      // Handle boundary conditions
+      if (newStart < min) {
+        newStart = min;
+        newEnd = min + rangeWidth;
+      }
+      
+      if (newEnd > max) {
+        newEnd = max;
+        newStart = max - rangeWidth;
+      }
+      
+      // Final boundary check
+      newStart = Math.max(min, newStart);
+      newEnd = Math.min(max, newEnd);
+      
+      // Update values and dispatch events
+      startValue = newStart;
+      endValue = newEnd;
+      dispatch('startChange', startValue);
       dispatch('endChange', endValue);
     }
   }
@@ -53,6 +85,11 @@
     isDragging = true;
     currentThumb = thumb;
     sliderRect = slider.getBoundingClientRect();
+    
+    if (thumb === 'range') {
+      rangeWidth = endValue - startValue;
+    }
+    
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('touchend', handleTouchEnd);
   }
@@ -68,8 +105,33 @@
     if (currentThumb === 'start') {
       startValue = Math.min(newValue, endValue);
       dispatch('startChange', startValue);
-    } else {
+    } else if (currentThumb === 'end') {
       endValue = Math.max(newValue, startValue);
+      dispatch('endChange', endValue);
+    } else if (currentThumb === 'range') {
+      // Move entire range, keeping width constant
+      let newStart = newValue - Math.floor(rangeWidth / 2);
+      let newEnd = newValue + Math.ceil(rangeWidth / 2);
+      
+      // Handle boundary conditions
+      if (newStart < min) {
+        newStart = min;
+        newEnd = min + rangeWidth;
+      }
+      
+      if (newEnd > max) {
+        newEnd = max;
+        newStart = max - rangeWidth;
+      }
+      
+      // Final boundary check
+      newStart = Math.max(min, newStart);
+      newEnd = Math.min(max, newEnd);
+      
+      // Update values and dispatch events
+      startValue = newStart;
+      endValue = newEnd;
+      dispatch('startChange', startValue);
       dispatch('endChange', endValue);
     }
   }
@@ -87,7 +149,11 @@
   style="--start-percent: {startPercent}%; --end-percent: {endPercent}%;"
 >
   <div class="track">
-    <div class="track-inner"></div>
+    <div 
+      class="track-inner"
+      on:mousedown={(e) => handleMouseDown(e, 'range')}
+      on:touchstart={(e) => handleTouchStart(e, 'range')}
+    ></div>
   </div>
   
   <div 
@@ -133,6 +199,11 @@
     left: var(--start-percent);
     right: calc(100% - var(--end-percent));
     border-radius: 3px;
+    cursor: grab;
+  }
+  
+  .track-inner:active {
+    cursor: grabbing;
   }
   
   .thumb {
