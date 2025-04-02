@@ -10,6 +10,7 @@
     export let opacity = 1;
     export let selectedValues = new Set();
     export let searchQuery = ""; 
+    export let showAnnotations = true;
 
     let annotations = [
         { x: 500, y: 400, radius: 30, label: "Border Belt Independent and North Carolina Coastal Federation have both published about GenX — an industrial chemical", label_x: 100, label_y: -90 },
@@ -64,113 +65,111 @@
         ctx.fill();
       });
 
-      // Draw annotations
-      annotations.forEach(annotation => {
-        ctx.globalAlpha = 1;
+      // Draw annotations only if showAnnotations is true
+      if (showAnnotations) {
+        annotations.forEach(annotation => {
+          ctx.globalAlpha = 1;
 
-        // Draw annotation circle
-        ctx.beginPath();
-        ctx.arc(annotation.x, annotation.y, annotation.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = "red";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
-        ctx.stroke();
+          // Draw annotation circle
+          ctx.beginPath();
+          ctx.arc(annotation.x, annotation.y, annotation.radius, 0, Math.PI * 2);
+          ctx.strokeStyle = "red";
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 5]);
+          ctx.stroke();
 
-        // Set text properties for measuring
-        const maxWidth = 150; // Maximum width for the label
-        const lineHeight = 12; // Line height for wrapped text
-        ctx.font = "11px Arial";
-        
-        // Calculate label bounding box
-        const labelX = annotation.x + annotation.label_x;
-        const labelY = annotation.y + annotation.label_y;
-        
-        // Determine text bounds by measuring and wrapping text
-        let textWidth = 0;
-        let textHeight = 0;
-        let lines = [];
-        let currentLine = "";
-        
-        // Process text wrapping to calculate height and width
-        if (annotation.label) {
-          const words = annotation.label.split(" ");
-          let line = "";
-          
-          words.forEach((word, index) => {
-            const testLine = line + word + " ";
-            const testWidth = ctx.measureText(testLine).width;
-            
-            if (testWidth > maxWidth && index > 0) {
-              lines.push(line);
-              textWidth = Math.max(textWidth, ctx.measureText(line).width);
-              line = word + " ";
-            } else {
-              line = testLine;
-            }
-          });
-          
-          lines.push(line);
-          textWidth = Math.max(textWidth, ctx.measureText(line).width);
-          textHeight = lineHeight * lines.length;
-        }
-        
-        // Label rectangle bounds
-        const rectX = labelX;
-        const rectY = labelY - lineHeight; // Offset to account for text baseline
-        const rectWidth = textWidth;
-        const rectHeight = textHeight;
-        
-        // Find closest point on the rectangle to the circle center
-        // First determine which side of the rectangle is closest to the circle center
-        let closestX, closestY;
-        
-        // Calculate x-coordinate of closest point
-        if (annotation.x < rectX) {
-          closestX = rectX;
-        } else if (annotation.x > rectX + rectWidth) {
-          closestX = rectX + rectWidth;
-        } else {
-          closestX = annotation.x;
-        }
-        
-        // Calculate y-coordinate of closest point
-        if (annotation.y < rectY) {
-          closestY = rectY;
-        } else if (annotation.y > rectY + rectHeight) {
-          closestY = rectY + rectHeight;
-        } else {
-          closestY = annotation.y;
-        }
-        
-        // Calculate the starting point of the line on the circle's outline
-        const angle = Math.atan2(closestY - annotation.y, closestX - annotation.x);
-        const startX = annotation.x + annotation.radius * Math.cos(angle);
-        const startY = annotation.y + annotation.radius * Math.sin(angle);
-
-        // Draw line connecting the circle outline to the closest point on the rectangle
-        ctx.setLineDash([]); // Solid line for the connector
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(closestX, closestY);
-        ctx.strokeStyle = "red";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Draw label with wrapping
-        if (annotation.label) {
+          // Set text properties for measuring
+          const maxWidth = 150; // Maximum width for the label
+          const lineHeight = 12; // Line height for wrapped text
           ctx.font = "11px Arial";
-          ctx.fillStyle = "red";
-
-          // Draw each line of text
-          lines.forEach((line, index) => {
-            ctx.fillText(line, labelX, labelY + index * lineHeight);
-          });
           
-          // For debugging: draw rectangle around text (uncomment if needed)
-          // ctx.strokeStyle = "rgba(255,0,0,0.3)";
-          // ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
-        }
-      });
+          // Calculate label bounding box
+          const labelX = annotation.x + annotation.label_x;
+          const labelY = annotation.y + annotation.label_y;
+          
+          // Determine text bounds by measuring and wrapping text
+          let textWidth = 0;
+          let textHeight = 0;
+          let lines = [];
+          let currentLine = "";
+          
+          // Process text wrapping to calculate height and width
+          if (annotation.label) {
+            const words = annotation.label.split(" ");
+            let line = "";
+            
+            words.forEach((word, index) => {
+              const testLine = line + word + " ";
+              const testWidth = ctx.measureText(testLine).width;
+              
+              if (testWidth > maxWidth && index > 0) {
+                lines.push(line);
+                textWidth = Math.max(textWidth, ctx.measureText(line).width);
+                line = word + " ";
+              } else {
+                line = testLine;
+              }
+            });
+            
+            lines.push(line);
+            textWidth = Math.max(textWidth, ctx.measureText(line).width);
+            textHeight = lineHeight * lines.length;
+          }
+          
+          // Label rectangle bounds
+          const rectX = labelX;
+          const rectY = labelY - lineHeight; // Offset to account for text baseline
+          const rectWidth = textWidth;
+          const rectHeight = textHeight;
+          
+          // Find closest point on the rectangle to the circle center
+          // First determine which side of the rectangle is closest to the circle center
+          let closestX, closestY;
+          
+          // Calculate x-coordinate of closest point
+          if (annotation.x < rectX) {
+            closestX = rectX;
+          } else if (annotation.x > rectX + rectWidth) {
+            closestX = rectX + rectWidth;
+          } else {
+            closestX = annotation.x;
+          }
+          
+          // Calculate y-coordinate of closest point
+          if (annotation.y < rectY) {
+            closestY = rectY;
+          } else if (annotation.y > rectY + rectHeight) {
+            closestY = rectY + rectHeight;
+          } else {
+            closestY = annotation.y;
+          }
+          
+          // Calculate the starting point of the line on the circle's outline
+          const angle = Math.atan2(closestY - annotation.y, closestX - annotation.x);
+          const startX = annotation.x + annotation.radius * Math.cos(angle);
+          const startY = annotation.y + annotation.radius * Math.sin(angle);
+
+          // Draw line connecting the circle outline to the closest point on the rectangle
+          ctx.setLineDash([]); // Solid line for the connector
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(closestX, closestY);
+          ctx.strokeStyle = "red";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          // Draw label with wrapping
+          if (annotation.label) {
+            ctx.font = "11px Arial";
+            ctx.fillStyle = "red";
+
+            // Draw each line of text
+            lines.forEach((line, index) => {
+              ctx.fillText(line, labelX, labelY + index * lineHeight);
+            });
+          }
+        });
+      }
 
       ctx.setLineDash([]); // Reset line dash
 

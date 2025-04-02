@@ -12,6 +12,7 @@
   let isPlaying = false;
   let playInterval = null;
   let searchQuery = "";
+  let showAnnotations = true; // New state variable for annotation visibility
 
   $: filteredData = data.filter(d =>
     (!startDate || d.date >= startDate) &&
@@ -49,22 +50,28 @@
     if (domainColumn) {
       uniqueValues = [...new Set(data.map(d => d[domainColumn]).filter(Boolean))];
     }
+    
+    // Reset annotations to be visible when data is first loaded
+    showAnnotations = true;
   }
 
   function handleDomainChange(event) {
     domainColumn = event.target.value;
     uniqueValues = domainColumn ? [...new Set(data.map(d => d[domainColumn]).filter(Boolean))] : [];
     selectedValues = new Set();
+    showAnnotations = false; // Hide annotations when domain changes
   }
 
   function handleSelectionChange(event) {
     selectedValues = new Set([...event.target.selectedOptions].map(o => o.value));
+    showAnnotations = false; // Hide annotations when selection changes
   }
 
   function handleDateChange(e, type) {
     const newDate = e.target.value ? new Date(e.target.value) : null;
     if (type === 'start') startDate = newDate;
     else endDate = newDate;
+    showAnnotations = false; // Hide annotations when date changes
   }
 
   function formatDateInput(date) {
@@ -78,6 +85,7 @@
       reader.onload = (e) => parseCSV(e.target.result);
       reader.readAsText(file);
     }
+    showAnnotations = false; // Hide annotations when file is uploaded
   }
 
   function shiftDateRange(days) {
@@ -99,6 +107,7 @@
     endDateIndex = newEndIndex;
     startDate = allDates[startDateIndex] || allDates[0];
     endDate = allDates[endDateIndex] || allDates[allDates.length - 1];
+    showAnnotations = false; // Hide annotations when date range shifts
   }
 
   function togglePlayPause() {
@@ -107,6 +116,7 @@
       isPlaying = false;
     } else {
       isPlaying = true;
+      showAnnotations = false; // Hide annotations when animation starts
       playInterval = setInterval(() => {
         if (endDateIndex >= allDates.length - 1) {
           clearInterval(playInterval);
@@ -120,6 +130,11 @@
 
   function handleSearch(event) {
     searchQuery = event.target.value;
+    showAnnotations = false; // Hide annotations when search query changes
+  }
+  
+  function handleOpacityChange() {
+    showAnnotations = false; // Hide annotations when opacity changes
   }
 </script>
 
@@ -182,7 +197,7 @@
       {/if}
 
       <label>💡 Adjust Opacity:</label>
-      <input type="range" min="0.01" max="1" step="0.1" bind:value={opacity} />
+      <input type="range" min="0.01" max="1" step="0.1" bind:value={opacity} on:input={handleOpacityChange} />
 
       <div class="date-controls">
         <label>📅 Date Range:</label>
@@ -194,12 +209,14 @@
             on:input={() => {
               if (startDateIndex > endDateIndex) startDateIndex = endDateIndex;
               startDate = allDates[startDateIndex];
+              showAnnotations = false; // Hide annotations when start date slider changes
             }}
             class="slider start-slider" />
           <input type="range" min="0" max={allDates.length - 1} bind:value={endDateIndex}
             on:input={() => {
               if (endDateIndex < startDateIndex) endDateIndex = startDateIndex;
               endDate = allDates[endDateIndex];
+              showAnnotations = false; // Hide annotations when end date slider changes
             }}
             class="slider end-slider" />
         </div>
@@ -232,7 +249,8 @@
           {domainColumn} 
           {selectedValues} 
           {opacity} 
-          {searchQuery} 
+          {searchQuery}
+          {showAnnotations}
         />
       {:else}
         <p>Loading data...</p>
