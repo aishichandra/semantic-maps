@@ -189,8 +189,14 @@
     
     function handleMouseMove(event) {
       const rect = canvas.getBoundingClientRect();
-      const mouseX = event.clientX - rect.left - margin.left;
-      const mouseY = event.clientY - rect.top - margin.top;
+      
+      // Calculate scaling ratio between internal canvas dimensions and displayed dimensions
+      const scaleX = containerWidth / rect.width;
+      const scaleY = containerHeight / rect.height;
+      
+      // Adjust mouse coordinates based on the scaling ratio
+      const mouseX = (event.clientX - rect.left) * scaleX - margin.left;
+      const mouseY = (event.clientY - rect.top) * scaleY - margin.top;
     
       const adjustedX = (mouseX - zoomCenter.x) / zoomScale + zoomCenter.x;
       const adjustedY = (mouseY - zoomCenter.y) / zoomScale + zoomCenter.y;
