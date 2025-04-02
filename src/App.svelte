@@ -50,28 +50,25 @@
     if (domainColumn) {
       uniqueValues = [...new Set(data.map(d => d[domainColumn]).filter(Boolean))];
     }
-    
-    // Reset annotations to be visible when data is first loaded
-    showAnnotations = true;
   }
 
   function handleDomainChange(event) {
     domainColumn = event.target.value;
     uniqueValues = domainColumn ? [...new Set(data.map(d => d[domainColumn]).filter(Boolean))] : [];
     selectedValues = new Set();
-    showAnnotations = false; // Hide annotations when domain changes
+    showAnnotations = false;
   }
 
   function handleSelectionChange(event) {
     selectedValues = new Set([...event.target.selectedOptions].map(o => o.value));
-    showAnnotations = false; // Hide annotations when selection changes
+    showAnnotations = false;
   }
 
   function handleDateChange(e, type) {
     const newDate = e.target.value ? new Date(e.target.value) : null;
     if (type === 'start') startDate = newDate;
     else endDate = newDate;
-    showAnnotations = false; // Hide annotations when date changes
+    showAnnotations = false;
   }
 
   function formatDateInput(date) {
@@ -82,10 +79,10 @@
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
+      showAnnotations = false;
       reader.onload = (e) => parseCSV(e.target.result);
       reader.readAsText(file);
     }
-    showAnnotations = false; // Hide annotations when file is uploaded
   }
 
   function shiftDateRange(days) {
@@ -107,7 +104,7 @@
     endDateIndex = newEndIndex;
     startDate = allDates[startDateIndex] || allDates[0];
     endDate = allDates[endDateIndex] || allDates[allDates.length - 1];
-    showAnnotations = false; // Hide annotations when date range shifts
+    showAnnotations = false;
   }
 
   function togglePlayPause() {
@@ -116,7 +113,7 @@
       isPlaying = false;
     } else {
       isPlaying = true;
-      showAnnotations = false; // Hide annotations when animation starts
+      showAnnotations = false;
       playInterval = setInterval(() => {
         if (endDateIndex >= allDates.length - 1) {
           clearInterval(playInterval);
@@ -130,11 +127,11 @@
 
   function handleSearch(event) {
     searchQuery = event.target.value;
-    showAnnotations = false; // Hide annotations when search query changes
+    showAnnotations = false;
   }
   
   function handleOpacityChange() {
-    showAnnotations = false; // Hide annotations when opacity changes
+    showAnnotations = false;
   }
 </script>
 
@@ -172,8 +169,8 @@
         </details>
       </div>
 
-      <!-- <label>📁 Upload CSV:</label>
-      <input type="file" accept=".csv" on:change={handleFileUpload} /> -->
+      <label>📁 Upload CSV:</label>
+      <input type="file" accept=".csv" on:change={handleFileUpload} />
       <label>🔍 Search Title:</label>
       <input type="text" placeholder="Search..." on:input={handleSearch} />
 
@@ -209,14 +206,14 @@
             on:input={() => {
               if (startDateIndex > endDateIndex) startDateIndex = endDateIndex;
               startDate = allDates[startDateIndex];
-              showAnnotations = false; // Hide annotations when start date slider changes
+              showAnnotations = false;
             }}
             class="slider start-slider" />
           <input type="range" min="0" max={allDates.length - 1} bind:value={endDateIndex}
             on:input={() => {
               if (endDateIndex < startDateIndex) endDateIndex = startDateIndex;
               endDate = allDates[endDateIndex];
-              showAnnotations = false; // Hide annotations when end date slider changes
+              showAnnotations = false;
             }}
             class="slider end-slider" />
         </div>
