@@ -291,16 +291,16 @@
 
   .filter-panel {
     background: #f9fafb;
-    padding: 1rem;
-    border-radius: 10px;
-    width: 300px; /* Fixed width for the panel */
+    /* border-right: #969696 1px solid; */
+    padding: 1.5rem;
+    width: 300px; 
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    max-height: 80vh; /* Set maximum height */
-    overflow-y: auto; /* Enable vertical scrolling */
-    position: sticky; /* Keep panel in place while scrolling */
-    top: 1rem; /* Distance from top of viewport */
+    max-height: 100vh; 
+    position: sticky; 
+    overflow: auto;
+    top: 1rem; 
   }
 
   .filter-panel label {
