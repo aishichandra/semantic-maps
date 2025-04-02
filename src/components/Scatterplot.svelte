@@ -221,7 +221,14 @@
       draw();
     });
     
-    $: if (ctx && data.length) draw();
+    $: if (ctx && data.length) {
+        draw();
+    }
+    
+    $: if (ctx) {
+        opacity, selectedValues, searchQuery, showAnnotations, domainColumn; // Watch these props
+        if (data.length) draw(); // Redraw when any of these change
+    }
 </script>
 
 <div class="chart-container">
