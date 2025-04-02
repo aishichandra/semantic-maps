@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import Papa from 'papaparse';
   import Scatterplot from './components/Scatterplot.svelte';
+  import RangeSlider from './components/RangeSlider.svelte';
 
   let data = [], columns = [], domainColumn = "org", uniqueValues = [];
   let selectedValues = new Set(); 
@@ -64,11 +65,68 @@
     showAnnotations = false;
   }
 
-  function handleDateChange(e, type) {
-    const newDate = e.target.value ? new Date(e.target.value) : null;
-    if (type === 'start') startDate = newDate;
-    else endDate = newDate;
+  function updateSelectedDates(start, end, fromIndices = false) {
+    if (fromIndices) {
+      // If we're updating from indices, convert them to actual dates
+      startDate = allDates[start] || allDates[0];
+      endDate = allDates[end] || allDates[allDates.length - 1];
+    } else {
+      // We're updating from actual date objects
+      startDate = start;
+      endDate = end;
+    }
     showAnnotations = false;
+  }
+
+  function updateDateIndices() {
+    // Find closest date indices based on the current startDate and endDate
+    if (startDate) {
+      const timestamp = startDate.getTime();
+      startDateIndex = Math.max(0, allDates.findIndex(d => d.getTime() >= timestamp));
+    } else {
+      startDateIndex = 0;
+    }
+
+    if (endDate) {
+      const timestamp = endDate.getTime();
+      const exactIndex = allDates.findIndex(d => d.getTime() >= timestamp);
+      endDateIndex = exactIndex >= 0 ? 
+        exactIndex : 
+        (allDates.length > 0 ? allDates.length - 1 : 0);
+    } else {
+      endDateIndex = allDates.length - 1;
+    }
+
+    // Ensure indices are in valid range
+    if (startDateIndex > endDateIndex) startDateIndex = endDateIndex;
+    if (endDateIndex < startDateIndex) endDateIndex = startDateIndex;
+  }
+
+  function handleDateChange(e, type) {
+    if (e.detail !== undefined) {
+      // Handle slider events
+      if (type === 'start') {
+        startDateIndex = e.detail;
+        if (startDateIndex > endDateIndex) startDateIndex = endDateIndex;
+      } else {
+        endDateIndex = e.detail;
+        if (endDateIndex < startDateIndex) endDateIndex = startDateIndex;
+      }
+      // Update dates based on the indices
+      updateSelectedDates(startDateIndex, endDateIndex, true);
+    } else {
+      // Handle date input events
+      const newDate = e.target.value ? new Date(e.target.value) : null;
+      
+      if (type === 'start') {
+        updateSelectedDates(newDate, endDate);
+      } else {
+        updateSelectedDates(startDate, newDate);
+      }
+      
+      // Update indices based on the new dates
+      updateDateIndices();
+    }
   }
 
   function formatDateInput(date) {
@@ -102,9 +160,7 @@
 
     startDateIndex = newStartIndex;
     endDateIndex = newEndIndex;
-    startDate = allDates[startDateIndex] || allDates[0];
-    endDate = allDates[endDateIndex] || allDates[allDates.length - 1];
-    showAnnotations = false;
+    updateSelectedDates(startDateIndex, endDateIndex, true);
   }
 
   function togglePlayPause() {
@@ -201,22 +257,14 @@
         <input type="date" value={formatDateInput(startDate)} on:change={(e) => handleDateChange(e, 'start')} />
         <input type="date" value={formatDateInput(endDate)} on:change={(e) => handleDateChange(e, 'end')} />
 
-        <div class="date-range-slider" style="--start-percent: {startPercent}%; --end-percent: {endPercent}%;">
-          <input type="range" min="0" max={allDates.length - 1} bind:value={startDateIndex}
-            on:input={() => {
-              if (startDateIndex > endDateIndex) startDateIndex = endDateIndex;
-              startDate = allDates[startDateIndex];
-              showAnnotations = false;
-            }}
-            class="slider start-slider" />
-          <input type="range" min="0" max={allDates.length - 1} bind:value={endDateIndex}
-            on:input={() => {
-              if (endDateIndex < startDateIndex) endDateIndex = startDateIndex;
-              endDate = allDates[endDateIndex];
-              showAnnotations = false;
-            }}
-            class="slider end-slider" />
-        </div>
+        <RangeSlider 
+          min={0} 
+          max={allDates.length - 1} 
+          bind:startValue={startDateIndex} 
+          bind:endValue={endDateIndex}
+          on:startChange={(e) => handleDateChange(e, 'start')}
+          on:endChange={(e) => handleDateChange(e, 'end')}
+        />
 
         <div class="date-range-labels">
           <span>{formatDateInput(startDate)}</span>
@@ -376,6 +424,21 @@
     outline: none;
   }
 
+  /* Add specific z-index for both sliders */
+  .start-slider {
+    z-index: 1;
+  }
+
+  .end-slider {
+    z-index: 1;
+  }
+
+  /* Make start slider visible when hovered or active */
+  .start-slider:hover,
+  .start-slider:active {
+    z-index: 1;
+  }
+
   .slider::-webkit-slider-thumb {
     pointer-events: auto;
     -webkit-appearance: none;
@@ -385,6 +448,7 @@
     border: 2px solid #4c8bf5;
     border-radius: 50%;
     cursor: pointer;
+    z-index: 3; /* Ensure thumb is always on top */
   }
 
   .date-range-labels {
