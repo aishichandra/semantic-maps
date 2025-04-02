@@ -13,8 +13,8 @@
     export let showAnnotations = true;
 
     let annotations = [
-        { x: 500, y: 400, radius: 30, label: "Border Belt Independent and North Carolina Coastal Federation have both published about GenX — an industrial chemical", label_x: 100, label_y: -90 },
-        { x: 720, y: 170, radius: 50, label: "Only Carolina Peacemaker seems to be publishing about personal health", label_x: -70, label_y: 80 }
+        { x: 500, y: 400, radius: 30, label: "Border Belt Independent and North Carolina Coastal Federation have both published about GenX — an industrial chemical.", label_x: -400, label_y: -80 },
+        { x: 720, y: 170, radius: 50, label: "Only Carolina Peacemaker seems to be publishing about personal health.", label_x: -100, label_y: 130 }
     ];
 
     let canvas;
@@ -79,9 +79,9 @@
           ctx.stroke();
 
           // Set text properties for measuring
-          const maxWidth = 150; // Maximum width for the label
+          const maxWidth = 180; // Maximum width for the label
           const lineHeight = 12; // Line height for wrapped text
-          ctx.font = "11px Arial";
+          ctx.font = "16px Arial";
           
           // Calculate label bounding box
           const labelX = annotation.x + annotation.label_x;
@@ -160,8 +160,10 @@
 
           // Draw label with wrapping
           if (annotation.label) {
-            ctx.font = "11px Arial";
+            ctx.font = "16px Arial";
             ctx.fillStyle = "red";
+            // increase line height between lines of t3ext
+            const lineHeight = 16; // Adjusted line height for better readability
 
             // Draw each line of text
             lines.forEach((line, index) => {
@@ -265,5 +267,57 @@
       background-color: white;
       max-width: 100%;
       height: auto;
+    }
+
+    .filter-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem; /* Increase spacing between elements */
+      padding: 1.5rem; /* Add more padding for better readability */
+      border-radius: 10px; /* Rounded corners */
+      background-color: #f9f9f9; /* Softer background color */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+      width: 300px; /* Slightly wider panel for better layout */
+    }
+
+    .filter-panel label {
+      font-weight: bold;
+      font-size: 1rem; /* Increase font size for labels */
+      color: #333; /* Darker text for better contrast */
+    }
+
+    .filter-panel input,
+    .filter-panel select {
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 0.9rem; /* Consistent font size for inputs */
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .filter-panel input:focus,
+    .filter-panel select:focus {
+      outline: none;
+      border-color: #4c8bf5;
+      box-shadow: 0 0 4px rgba(76, 139, 245, 0.5);
+    }
+
+    .filter-panel .multi-select {
+      height: auto;
+      max-height: 150px; /* Limit height for better readability */
+      overflow-y: auto; /* Add scroll for long lists */
+    }
+
+    .filter-panel .section {
+      border-top: 1px solid #ddd; /* Add a separator between sections */
+      padding-top: 1rem;
+      margin-top: 1rem;
+    }
+
+    .filter-panel .section:first-child {
+      border-top: none; /* Remove separator for the first section */
+      padding-top: 0;
+      margin-top: 0;
     }
 </style>
