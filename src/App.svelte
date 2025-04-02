@@ -12,6 +12,7 @@
   let isPlaying = false;
   let playInterval = null;
   let searchQuery = "";
+  let showAnnotations = true; // New state variable for annotation visibility
 
   $: filteredData = data.filter(d =>
     (!startDate || d.date >= startDate) &&
@@ -55,16 +56,19 @@
     domainColumn = event.target.value;
     uniqueValues = domainColumn ? [...new Set(data.map(d => d[domainColumn]).filter(Boolean))] : [];
     selectedValues = new Set();
+    showAnnotations = false;
   }
 
   function handleSelectionChange(event) {
     selectedValues = new Set([...event.target.selectedOptions].map(o => o.value));
+    showAnnotations = false;
   }
 
   function handleDateChange(e, type) {
     const newDate = e.target.value ? new Date(e.target.value) : null;
     if (type === 'start') startDate = newDate;
     else endDate = newDate;
+    showAnnotations = false;
   }
 
   function formatDateInput(date) {
@@ -75,6 +79,7 @@
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
+      showAnnotations = false;
       reader.onload = (e) => parseCSV(e.target.result);
       reader.readAsText(file);
     }
@@ -99,6 +104,7 @@
     endDateIndex = newEndIndex;
     startDate = allDates[startDateIndex] || allDates[0];
     endDate = allDates[endDateIndex] || allDates[allDates.length - 1];
+    showAnnotations = false;
   }
 
   function togglePlayPause() {
@@ -107,6 +113,7 @@
       isPlaying = false;
     } else {
       isPlaying = true;
+      showAnnotations = false;
       playInterval = setInterval(() => {
         if (endDateIndex >= allDates.length - 1) {
           clearInterval(playInterval);
@@ -120,6 +127,11 @@
 
   function handleSearch(event) {
     searchQuery = event.target.value;
+    showAnnotations = false;
+  }
+  
+  function handleOpacityChange() {
+    showAnnotations = false;
   }
 </script>
 
@@ -157,8 +169,8 @@
         </details>
       </div>
 
-      <!-- <label>📁 Upload CSV:</label>
-      <input type="file" accept=".csv" on:change={handleFileUpload} /> -->
+      <label>📁 Upload CSV:</label>
+      <input type="file" accept=".csv" on:change={handleFileUpload} />
       <label>🔍 Search Title:</label>
       <input type="text" placeholder="Search..." on:input={handleSearch} />
 
@@ -182,7 +194,7 @@
       {/if}
 
       <label>💡 Adjust Opacity:</label>
-      <input type="range" min="0.01" max="1" step="0.1" bind:value={opacity} />
+      <input type="range" min="0.01" max="1" step="0.1" bind:value={opacity} on:input={handleOpacityChange} />
 
       <div class="date-controls">
         <label>📅 Date Range:</label>
@@ -194,12 +206,14 @@
             on:input={() => {
               if (startDateIndex > endDateIndex) startDateIndex = endDateIndex;
               startDate = allDates[startDateIndex];
+              showAnnotations = false;
             }}
             class="slider start-slider" />
           <input type="range" min="0" max={allDates.length - 1} bind:value={endDateIndex}
             on:input={() => {
               if (endDateIndex < startDateIndex) endDateIndex = startDateIndex;
               endDate = allDates[endDateIndex];
+              showAnnotations = false;
             }}
             class="slider end-slider" />
         </div>
@@ -232,7 +246,8 @@
           {domainColumn} 
           {selectedValues} 
           {opacity} 
-          {searchQuery} 
+          {searchQuery}
+          {showAnnotations}
         />
       {:else}
         <p>Loading data...</p>
