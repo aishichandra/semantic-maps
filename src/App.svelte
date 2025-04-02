@@ -314,12 +314,12 @@
     font-size: 0.9rem;
     border: 1px solid #ccc;
     border-radius: 5px;
-    width: 100%; /* Make inputs and selects take full width of the panel */
-    box-sizing: border-box; /* Ensure padding doesn't affect width */
+    width: 100%; 
+    box-sizing: border-box; 
   }
 
   .multi-select {
-    max-height: 150px;
+    min-height: 150px;
     overflow-y: auto;
     width: 100%; 
   }
