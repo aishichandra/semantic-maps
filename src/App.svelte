@@ -286,6 +286,7 @@
   .content {
     display: flex;
     gap: 1.5rem;
+    align-items: flex-start; /* Align items at the top */
   }
 
   .filter-panel {
@@ -296,6 +297,10 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    max-height: 80vh; /* Set maximum height */
+    overflow-y: auto; /* Enable vertical scrolling */
+    position: sticky; /* Keep panel in place while scrolling */
+    top: 1rem; /* Distance from top of viewport */
   }
 
   .filter-panel label {
