@@ -147,7 +147,7 @@
     <div class="filter-panel">
 
       <div class="nerd-box">
-        <details>
+        <details open>
           <summary>➕ What is a Semantic Map?</summary>
           <div class="nerd-box-content">
             <p>
