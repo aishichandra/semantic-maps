@@ -12,13 +12,21 @@
   let endDateIndex = 0;
   let isPlaying = false;
   let playInterval = null;
-  let searchQuery = "";
-  let showAnnotations = true; // New state variable for annotation visibility
+  let highlightedData = [];
+  $: highlightedSet = new Set(highlightedData.map(d => d.id));
 
-  $: filteredData = data.filter(d =>
-    (!startDate || d.date >= startDate) &&
-    (!endDate || d.date <= endDate)
-  );
+
+  let searchQuery = "";
+  let showAnnotations = true;
+
+  $: filteredData = data.map(d => ({
+    ...d,
+    isHighlighted:
+      selectedValues.has(d[domainColumn]) &&
+      startDate && endDate &&
+      d.date >= startDate && d.date <= endDate
+  }));
+
 
   $: startPercent = allDates.length > 1 ? (startDateIndex / (allDates.length - 1)) * 100 : 0;
   $: endPercent = allDates.length > 1 ? (endDateIndex / (allDates.length - 1)) * 100 : 100;
@@ -36,7 +44,8 @@
   function parseCSV(csvText) {
     const result = Papa.parse(csvText, { header: true });
     data = result.data.filter(d => d.x && d.y && d.date)
-      .map(d => ({ ...d, x: +d.x, y: +d.y, date: new Date(d.date) }));
+    .map((d, i) => ({ ...d, x: +d.x, y: +d.y, date: new Date(d.date), id: i }))
+
 
     columns = result.meta.fields || [];
     allDates = [...new Set(data.map(d => d.date.getTime()))]
@@ -60,10 +69,38 @@
     showAnnotations = false;
   }
 
+  // function handleSelectionChange(event) {
+  //   selectedValues = new Set([...event.target.selectedOptions].map(o => o.value));
+  //   // edit the selected values so it also maps to the date range that hte user selected. 
+
+  //   showAnnotations = false;
+  // }
   function handleSelectionChange(event) {
-    selectedValues = new Set([...event.target.selectedOptions].map(o => o.value));
+    const selectedOptions = [...event.target.selectedOptions].map(o => o.value);
+
+    // Step 1: Filter data within the current date range
+    const dateFilteredData = data.filter(d =>
+      (!startDate || d.date >= startDate) &&
+      (!endDate || d.date <= endDate)
+    );
+
+    // Step 2: Keep only selected options that exist in the filtered data
+    const valuesInDateRange = new Set(dateFilteredData.map(d => d[domainColumn]));
+
+    // Step 3: Intersect the dropdown selection with values in date range
+    selectedValues = new Set(
+      selectedOptions.filter(value => valuesInDateRange.has(value))
+    );
+
+    // Step 4: Update highlightedData accordingly
+    highlightedData = dateFilteredData.filter(d =>
+      selectedValues.has(d[domainColumn])
+    );
+
     showAnnotations = false;
   }
+
+
 
   function updateSelectedDates(start, end, fromIndices = false) {
     if (fromIndices) {
@@ -203,7 +240,7 @@
     <div class="filter-panel">
 
       <div class="nerd-box">
-        <details open>
+        <details close>
           <summary>➕ What is a Semantic Map?</summary>
           <div class="nerd-box-content">
             <p>
@@ -297,6 +334,9 @@
           {opacity} 
           {searchQuery}
           {showAnnotations}
+          {highlightedData}
+          {startDate}    
+          {endDate}      
         />
       {:else}
         <p>Loading data...</p>

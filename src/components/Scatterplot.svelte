@@ -11,6 +11,10 @@
     export let selectedValues = new Set();
     export let searchQuery = ""; 
     export let showAnnotations = true;
+    export let highlightedData = [];
+    export let startDate = null;  // Add these new props
+    export let endDate = null;    // Add these new props
+
 
     let annotations = [
         { x: 500, y: 400, radius: 30, label: "Border Belt Independent and North Carolina Coastal Federation have both published about GenX — an industrial chemical.", label_x: -400, label_y: -80 },
@@ -30,6 +34,9 @@
     let lastHoveredData = null;
     let zoomScale = 1;
     let zoomCenter = { x: 0, y: 0 };
+    $: highlightedSet = new Set(highlightedData.map(d => d.id));
+
+
     
     $: innerWidth = containerWidth - margin.left - margin.right;
     $: innerHeight = containerHeight - margin.top - margin.bottom;
@@ -47,6 +54,7 @@
       .range(schemeCategory10);
     
     function draw() {
+      if (!ctx || !data.length) return;
       ctx.clearRect(0, 0, containerWidth, containerHeight);
       ctx.save();
       ctx.translate(zoomCenter.x, zoomCenter.y);
@@ -55,15 +63,33 @@
 
       // Draw data points
       data.forEach(d => {
-        const isHighlighted = searchQuery && d.title && d.title.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = searchQuery && d.title?.toLowerCase().includes(searchQuery.toLowerCase());
+        const isHighlighted = highlightedSet.has(d.id) || matchesSearch;
         const isSelected = selectedValues.has(d[domainColumn]);
+        const isInDateRange = (!startDate || d.date >= startDate) && 
+                             (!endDate || d.date <= endDate);
 
         ctx.beginPath();
         ctx.arc(margin.left + xScale(d.x), margin.top + yScale(d.y), radius, 0, Math.PI * 2);
         ctx.fillStyle = colorScale(d[domainColumn]);
-        ctx.globalAlpha = isHighlighted || isSelected ? 1 : opacity * 0.4;
+        
+        // Set opacity based on conditions
+        if (isInDateRange) {
+          ctx.globalAlpha = 1;
+        } else {
+          ctx.globalAlpha = opacity * 0.2;
+        }
+        
         ctx.fill();
+
+        // Optional: outline highlighted points
+        if (isHighlighted) {
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = '#000';
+          ctx.stroke();
+        }
       });
+
 
       // Draw annotations only if showAnnotations is true
       if (showAnnotations) {
@@ -234,7 +260,7 @@
     }
     
     $: if (ctx) {
-        opacity, selectedValues, searchQuery, showAnnotations, domainColumn; // Watch these props
+        opacity, selectedValues, searchQuery, showAnnotations, domainColumn, startDate, endDate; // Watch these props
         if (data.length) draw(); // Redraw when any of these change
     }
 </script>
