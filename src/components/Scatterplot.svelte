@@ -274,8 +274,11 @@
         const isFullDateRange = startDate?.getTime() === Math.min(...data.map(d => d.date.getTime())) &&
                                endDate?.getTime() === Math.max(...data.map(d => d.date.getTime()));
 
-        // Only allow hovering if point is "selected" (visible at full opacity)
-        const isVisible = ((isHighlighted || isSelected) && isInDateRange && !isFullDateRange) ||
+        // Allow hovering in default state or if point matches filters
+        const isDefaultState = selectedValues.size === 0 || 
+                             selectedValues.size === new Set(data.map(d => d[domainColumn])).size;
+        const isVisible = isDefaultState || 
+                         ((isHighlighted || isSelected) && isInDateRange && !isFullDateRange) ||
                          (isInDateRange && !isFullDateRange && selectedValues.size === 0) ||
                          ((isHighlighted || isSelected) && isFullDateRange);
 
