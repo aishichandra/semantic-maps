@@ -60,6 +60,7 @@
       const isFullDateRange = startDate?.getTime() === Math.min(...data.map(d => d.date.getTime())) &&
                              endDate?.getTime() === Math.max(...data.map(d => d.date.getTime()));
 
+                             
       ctx.clearRect(0, 0, containerWidth, containerHeight);
       ctx.save();
       ctx.translate(zoomCenter.x, zoomCenter.y);
@@ -67,39 +68,57 @@
       ctx.translate(-zoomCenter.x, -zoomCenter.y);
 
       // Draw data points
+      // data.forEach(d => {
+      //   const matchesSearch = searchQuery && d.title?.toLowerCase().includes(searchQuery.toLowerCase());
+      //   const isHighlighted = highlightedSet.has(d.id) || matchesSearch;
+      //   const isSelected = selectedValues.has(d[domainColumn]);
+      //   const isInDateRange = (!startDate || d.date >= startDate) && 
+      //                        (!endDate || d.date <= endDate);
+
+      //   ctx.beginPath();
+      //   ctx.arc(margin.left + xScale(d.x), margin.top + yScale(d.y), radius, 0, Math.PI * 2);
+      //   ctx.fillStyle = colorScale(d[domainColumn]);
+        
+      //   // Set opacity based on conditions
+      //   if (isInDateRange && !isFullDateRange) {
+      //     ctx.globalAlpha = 1;
+      //   } else if ((isHighlighted || isSelected) && isFullDateRange) {
+      //     ctx.globalAlpha = 1;
+      //   } else {
+      //     ctx.globalAlpha = opacity * 0.2;
+      //   }
+
+      //   ctx.fill();
+
+      // });
+
       data.forEach(d => {
         const matchesSearch = searchQuery && d.title?.toLowerCase().includes(searchQuery.toLowerCase());
         const isHighlighted = highlightedSet.has(d.id) || matchesSearch;
         const isSelected = selectedValues.has(d[domainColumn]);
         const isInDateRange = (!startDate || d.date >= startDate) && 
-                             (!endDate || d.date <= endDate);
+                            (!endDate || d.date <= endDate);
 
         ctx.beginPath();
         ctx.arc(margin.left + xScale(d.x), margin.top + yScale(d.y), radius, 0, Math.PI * 2);
         ctx.fillStyle = colorScale(d[domainColumn]);
         
         // Set opacity based on conditions
-        // if (isHighlighted && isSelected) {
-        //   ctx.globalAlpha = 1;
-        // } else if (isInDateRange && !isFullDateRange) {
-        //   ctx.globalAlpha = 1;
-        // } else {
-        //   ctx.globalAlpha = opacity * 0.2;
-        // }
         if ((isHighlighted || isSelected) && isInDateRange && !isFullDateRange) {
+          // Show points that match both filters at full opacity
+          ctx.globalAlpha = 1;
+        } else if (isInDateRange && !isFullDateRange && selectedValues.size === 0) {
+          // If only date range is active (no highlights selected), show all points in range
           ctx.globalAlpha = 1;
         } else if ((isHighlighted || isSelected) && isFullDateRange) {
+          // If only highlights are active (full date range), show highlighted points
           ctx.globalAlpha = 1;
         } else {
+          // Dim all other points
           ctx.globalAlpha = opacity * 0.2;
         }
+        
         ctx.fill();
-
-        // if (isHighlighted) {
-        //   ctx.lineWidth = 1.5;
-        //   ctx.strokeStyle = '#000';
-        //   ctx.stroke();
-        // }
       });
 
 

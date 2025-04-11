@@ -21,10 +21,11 @@
 
   $: filteredData = data.map(d => ({
     ...d,
-    isHighlighted:
+    isHighlighted: 
+      (selectedValues.size > 0 && selectedValues.size < uniqueValues.length) && 
       selectedValues.has(d[domainColumn]) &&
-      startDate && endDate &&
-      d.date >= startDate && d.date <= endDate
+      (!startDate || d.date >= startDate) &&
+      (!endDate || d.date <= endDate)
   }));
 
 
@@ -69,38 +70,28 @@
     showAnnotations = false;
   }
 
-  // function handleSelectionChange(event) {
-  //   selectedValues = new Set([...event.target.selectedOptions].map(o => o.value));
-  //   // edit the selected values so it also maps to the date range that hte user selected. 
-
-  //   showAnnotations = false;
-  // }
   function handleSelectionChange(event) {
     const selectedOptions = [...event.target.selectedOptions].map(o => o.value);
-
-    // Step 1: Filter data within the current date range
-    const dateFilteredData = data.filter(d =>
-      (!startDate || d.date >= startDate) &&
-      (!endDate || d.date <= endDate)
-    );
-
-    // Step 2: Keep only selected options that exist in the filtered data
-    const valuesInDateRange = new Set(dateFilteredData.map(d => d[domainColumn]));
-
-    // Step 3: Intersect the dropdown selection with values in date range
-    selectedValues = new Set(
-      selectedOptions.filter(value => valuesInDateRange.has(value))
-    );
-
-    // Step 4: Update highlightedData accordingly
-    highlightedData = dateFilteredData.filter(d =>
-      selectedValues.has(d[domainColumn])
-    );
-
+    
+    // Check if all values are selected
+    const allSelected = selectedOptions.length === uniqueValues.length;
+    
+    if (allSelected || selectedOptions.length === 0) {
+      // If all values are selected or none are selected, clear the selection
+      selectedValues = new Set();
+      highlightedData = [];
+    } else {
+      // Only update selection if a subset is chosen
+      selectedValues = new Set(selectedOptions);
+      highlightedData = data.filter(d =>
+        selectedValues.has(d[domainColumn]) &&
+        (!startDate || d.date >= startDate) &&
+        (!endDate || d.date <= endDate)
+      );
+    }
+    
     showAnnotations = false;
   }
-
-
 
   function updateSelectedDates(start, end, fromIndices = false) {
     if (fromIndices) {
