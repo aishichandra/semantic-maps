@@ -263,16 +263,33 @@
       const foundData = data.find(d => {
         const dx = xScale(d.x) - adjustedX;
         const dy = yScale(d.y) - adjustedY;
-        return Math.sqrt(dx * dx + dy * dy) < radius + 3;
+        const isInRange = Math.sqrt(dx * dx + dy * dy) < radius + 3;
+
+        // Check if point is currently highlighted based on filters
+        const matchesSearch = searchQuery && d.title?.toLowerCase().includes(searchQuery.toLowerCase());
+        const isHighlighted = highlightedSet.has(d.id) || matchesSearch;
+        const isSelected = selectedValues.has(d[domainColumn]);
+        const isInDateRange = (!startDate || d.date >= startDate) && 
+                             (!endDate || d.date <= endDate);
+        const isFullDateRange = startDate?.getTime() === Math.min(...data.map(d => d.date.getTime())) &&
+                               endDate?.getTime() === Math.max(...data.map(d => d.date.getTime()));
+
+        // Only allow hovering if point is "selected" (visible at full opacity)
+        const isVisible = ((isHighlighted || isSelected) && isInDateRange && !isFullDateRange) ||
+                         (isInDateRange && !isFullDateRange && selectedValues.size === 0) ||
+                         ((isHighlighted || isSelected) && isFullDateRange);
+
+        return isInRange && isVisible;
       });
-    
+
       if (foundData) {
         hoveredData = foundData;
         lastHoveredData = foundData;
       } else {
-        hoveredData = lastHoveredData;
+        hoveredData = null;
+        lastHoveredData = null;
       }
-    
+
       draw();
     }
     
@@ -304,7 +321,9 @@
       on:mousemove={handleMouseMove}
       on:mouseleave={handleMouseLeave}
     ></canvas>
-    <DetailCard {hoveredData} {data} {domainColumn} {colorScale} />
+    {#if hoveredData}
+      <DetailCard {hoveredData} {data} {domainColumn} {colorScale} />
+    {/if}
 </div>
 
 <style>
