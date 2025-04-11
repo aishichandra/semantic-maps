@@ -55,6 +55,11 @@
     
     function draw() {
       if (!ctx || !data.length) return;
+      
+      // Check if full date range is selected
+      const isFullDateRange = startDate?.getTime() === Math.min(...data.map(d => d.date.getTime())) &&
+                             endDate?.getTime() === Math.max(...data.map(d => d.date.getTime()));
+
       ctx.clearRect(0, 0, containerWidth, containerHeight);
       ctx.save();
       ctx.translate(zoomCenter.x, zoomCenter.y);
@@ -74,20 +79,27 @@
         ctx.fillStyle = colorScale(d[domainColumn]);
         
         // Set opacity based on conditions
-        if (isInDateRange) {
+        // if (isHighlighted && isSelected) {
+        //   ctx.globalAlpha = 1;
+        // } else if (isInDateRange && !isFullDateRange) {
+        //   ctx.globalAlpha = 1;
+        // } else {
+        //   ctx.globalAlpha = opacity * 0.2;
+        // }
+        if ((isHighlighted || isSelected) && isInDateRange && !isFullDateRange) {
+          ctx.globalAlpha = 1;
+        } else if ((isHighlighted || isSelected) && isFullDateRange) {
           ctx.globalAlpha = 1;
         } else {
           ctx.globalAlpha = opacity * 0.2;
         }
-        
         ctx.fill();
 
-        // Optional: outline highlighted points
-        if (isHighlighted) {
-          ctx.lineWidth = 1.5;
-          ctx.strokeStyle = '#000';
-          ctx.stroke();
-        }
+        // if (isHighlighted) {
+        //   ctx.lineWidth = 1.5;
+        //   ctx.strokeStyle = '#000';
+        //   ctx.stroke();
+        // }
       });
 
 
